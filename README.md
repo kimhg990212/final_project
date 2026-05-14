@@ -59,7 +59,7 @@
 git clone https://github.com/kimhg990212/final_project
 
 # 폴더 이동
-cd Human_Final_PJ
+cd final_project
 
 ```
 
