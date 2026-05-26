@@ -1,14 +1,12 @@
 import uvicorn,os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes import post, text_logo
-
-from dotenv import load_dotenv
-load_dotenv()
-
-from routes import post
 
 app = FastAPI()
 app.add_middleware(
@@ -32,19 +30,19 @@ if __name__ == "__main__":
 app.include_router(text_logo.router, prefix="/text-logo")
 
 # FR-08기능 추가 라우터
-from routes.generate_route import (
-    router as generate_router
-)
+# from routes.generate_route import (
+#     router as generate_router
+# )
 
-from middleware.error_middleware import (
-    global_exception_handler
-)
-app.include_router(generate_router)
+# from middleware.error_middleware import (
+#     global_exception_handler
+# )
+# app.include_router(generate_router)
 
-app.add_exception_handler(
-    Exception,
-    global_exception_handler
-)
+# app.add_exception_handler(
+#     Exception,
+#     global_exception_handler
+# )
 
 @app.get("/")
 def root():
@@ -52,11 +50,12 @@ def root():
     return {
         "message": "Server Running"
     }
-)
-#FR-09기능 추가 라우터 
-from routes.search_route import (
-    router as search_router
-)
 
-app.include_router(
-    search_router
+#FR-09기능 추가 라우터 
+# from routes.search_route import (
+#     router as search_router
+# )
+
+# app.include_router(
+#     search_router
+# )
