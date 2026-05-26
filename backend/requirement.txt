@@ -3,14 +3,11 @@ uvicorn==0.30.6
 python-multipart==0.0.9
 pydantic==2.9.2
 
-SQLAlchemy
-pandas
-
+pandaswq
 numpy==1.26.4
 pillow==10.4.0
 
 pandasql
-python-dotenv
 bcrypt
 joblib
 
@@ -27,3 +24,6 @@ safetensors==0.4.5
 sqlalchemy==2.0.35
 
 python-dotenv==1.0.1
+
+pymysql==1.2.0  
+requests==2.34.2 
