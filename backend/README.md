@@ -52,6 +52,7 @@ backend/
      ├─ text_logo_prompt_builder.py 추출된 키워드를 기반으로 AI 이미지 생성에 적합한 프롬프트 생성
      └─ text_logo_file.py 생성된 이미지 파일을 저장하고, 클라이언트에 반환할 이미지 경로를 관리
 ```
+```
 #FR-08 흐름
 사용자 스케치 이미지 업로드
 +
@@ -76,8 +77,10 @@ Stable Diffusion 기반 로고 재생성
 생성 결과 반환
         ↓
 생성 이력 저장
+```
 
 #FR-08 백엔드 구조 및 파일 정의
+```
 backend/
  ├─ routes/
  │   ├─ generate_route.py
@@ -156,3 +159,4 @@ backend/
  └─ main.py
       FastAPI 서버 실행 및
       전체 Route/Middleware 등록 관리
+```
