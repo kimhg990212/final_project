@@ -2,6 +2,9 @@ import uvicorn,os
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+from routes import post, text_logo
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -24,3 +27,6 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT")),
         reload=True,
     )
+
+# FR-05기능 추가 라우터
+app.include_router(text_logo.router, prefix="/text-logo")
