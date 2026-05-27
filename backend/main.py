@@ -1,4 +1,4 @@
-import uvicorn,os
+import uvicorn, os
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import post, text_logo
+from routes import post, text_logo, trend
 
 app = FastAPI()
 app.add_middleware(
@@ -17,14 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(post.router, prefix="/posts")
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",          # 모듈:앱 경로
-        host=os.getenv("HOST"), 
-        port=int(os.getenv("PORT")),
-        reload=True,
-    )
 
 # FR-05기능 추가 라우터
 app.include_router(text_logo.router, prefix="/text-logo")
@@ -59,3 +51,15 @@ def root():
 # app.include_router(
 #     search_router
 # )
+
+
+app.include_router(trend.router, prefix="/trends")
+
+app.include_router(post.router, prefix="/posts")
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",          # 모듈:앱 경로
+        host=os.getenv("HOST"), 
+        port=int(os.getenv("PORT")),
+        reload=True,
+    )
