@@ -1,6 +1,143 @@
+import os
+import time
+import uuid
+import requests
+
+
 def generate_logo_image(prompt: str):
+    comfyui_url = os.getenv("COMFYUI_URL")
+
+    if not comfyui_url:
+        return {
+            "image_url": None,
+            "status": "error",
+            "message": "COMFYUI_URL이 .env에 설정되지 않았습니다."
+        }
+
+    comfyui_url = comfyui_url.rstrip("/")
+    logo_prompt = f"""
+one single logo only, centered single symbol, isolated on plain white background,
+minimal vector logo, flat logo design, clean outline,
+simple dog and cat face icon, paw print, medical cross,
+veterinary clinic logo, animal hospital brand identity,
+white and green color palette, warm and trustworthy mood,
+not a grid, not multiple options, not a logo sheet,
+{prompt}
+"""
+    workflow = {
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "seed": int(time.time()),
+                "steps": 20,
+                "cfg": 7,
+                "sampler_name": "euler",
+                "scheduler": "simple",
+                "denoise": 1,
+                "model": ["4", 0],
+                "positive": ["6", 0],
+                "negative": ["7", 0],
+                "latent_image": ["5", 0]
+            }
+        },
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+                "ckpt_name": "sd_xl_base_1.0.safetensors"
+            }
+        },
+        "5": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+                "width": 512,
+                "height": 512,
+                "batch_size": 1
+            }
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+                "text": logo_prompt,
+                "clip": ["4", 1]
+            }
+        },
+        "7": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+                "text": "grid, collage, multiple icons, logo sheet, variations, panels, mockup, poster, menu board, packaging, realistic, photo, painting, 3d, complex background, text, letters, watermark, blurry, low quality, abstract circles, random geometric shapes",
+                "clip": ["4", 1]
+            }
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {
+                "samples": ["3", 0],
+                "vae": ["4", 2]
+            }
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {
+                "filename_prefix": "text_logo",
+                "images": ["8", 0]
+            }
+        }
+    }
+
+    prompt_response = requests.post(
+        f"{comfyui_url}/prompt",
+        json={
+            "prompt": workflow,
+            "client_id": str(uuid.uuid4())
+        },
+        timeout=30
+    )
+
+    if prompt_response.status_code != 200:
+        return {
+            "image_url": None,
+            "status": "error",
+            "message": prompt_response.text
+        }
+
+    prompt_id = prompt_response.json().get("prompt_id")
+
+    for _ in range(60):
+        history_response = requests.get(
+            f"{comfyui_url}/history/{prompt_id}",
+            timeout=30
+        )
+
+        history = history_response.json()
+
+        if prompt_id in history:
+            outputs = history[prompt_id].get("outputs", {})
+
+            for node_output in outputs.values():
+                images = node_output.get("images")
+                if images:
+                    image = images[0]
+                    filename = image["filename"]
+                    subfolder = image.get("subfolder", "")
+                    image_type = image.get("type", "output")
+
+                    image_url = (
+                        f"{comfyui_url}/view"
+                        f"?filename={filename}"
+                        f"&subfolder={subfolder}"
+                        f"&type={image_type}"
+                    )
+
+                    return {
+                        "image_url": image_url,
+                        "status": "success",
+                        "message": "이미지 생성이 완료되었습니다."
+                    }
+
+        time.sleep(1)
+
     return {
-        "image_url": "/generated_images/sample_logo.png",
-        "status": "mock",
-        "message": "Stable Diffusion 연결 전 더미 이미지 URL입니다."
+        "image_url": None,
+        "status": "timeout",
+        "message": "이미지 생성 완료를 기다리다 시간이 초과되었습니다."
     }
