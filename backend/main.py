@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import post, text_logo, trend
+from routes import post, text_logo, trend, user
 
 app = FastAPI()
 app.add_middleware(
@@ -56,6 +56,9 @@ def root():
 app.include_router(trend.router, prefix="/trends")
 
 app.include_router(post.router, prefix="/posts")
+
+app.include_router(user.router, prefix= "/users")
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",          # 모듈:앱 경로
