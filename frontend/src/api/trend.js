@@ -13,12 +13,14 @@ export async function getTrends({
   classification = "",
   period = "1y",
   page = 1,
+  sort = "latest",
 }) {
   // URL 쿼리 문자열 만들기
   const queryString = new URLSearchParams({
     classification,
     period,
     page: String(page),
+    sort,
   }).toString();
 
   // 백엔드 호출
