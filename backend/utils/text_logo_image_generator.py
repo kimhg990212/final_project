@@ -16,12 +16,15 @@ def generate_logo_image(prompt: str):
 
     comfyui_url = comfyui_url.rstrip("/")
     logo_prompt = f"""
-one single logo only, centered single symbol, isolated on plain white background,
-minimal vector logo, flat logo design, clean outline,
-simple dog and cat face icon, paw print, medical cross,
-veterinary clinic logo, animal hospital brand identity,
-white and green color palette, warm and trustworthy mood,
-not a grid, not multiple options, not a logo sheet,
+ONE single logo only.
+A single centered icon mark.
+Only one symbol in the entire image.
+Minimal flat vector logo.
+Clean simple outline.
+Isolated on plain white background.
+No grid, no collage, no logo sheet, no variations, no multiple icons.
+No panels, no frames, no mockup.
+Professional brand identity logo.
 {prompt}
 """
     workflow = {
@@ -29,12 +32,12 @@ not a grid, not multiple options, not a logo sheet,
             "class_type": "KSampler",
             "inputs": {
                 "seed": int(time.time()),
-                "steps": 20,
-                "cfg": 7,
+                "steps": 25,
+                "cfg": 8,
                 "sampler_name": "euler",
                 "scheduler": "simple",
                 "denoise": 1,
-                "model": ["4", 0],
+                "model": ["10", 0],
                 "positive": ["6", 0],
                 "negative": ["7", 0],
                 "latent_image": ["5", 0]
@@ -58,14 +61,14 @@ not a grid, not multiple options, not a logo sheet,
             "class_type": "CLIPTextEncode",
             "inputs": {
                 "text": logo_prompt,
-                "clip": ["4", 1]
+                "clip": ["10", 1]
             }
         },
         "7": {
             "class_type": "CLIPTextEncode",
             "inputs": {
-                "text": "grid, collage, multiple icons, logo sheet, variations, panels, mockup, poster, menu board, packaging, realistic, photo, painting, 3d, complex background, text, letters, watermark, blurry, low quality, abstract circles, random geometric shapes",
-                "clip": ["4", 1]
+                "text": "grid, collage, logo sheet, multiple logos, multiple icons, variations, panels, divided layout, tiled layout, split screen, repeated symbols, poster, mockup, packaging, menu board, text, letters, watermark, blurry, low quality, realistic, photo, painting, 3d, complex background",
+                "clip": ["10", 1]
             }
         },
         "8": {
@@ -76,14 +79,22 @@ not a grid, not multiple options, not a logo sheet,
             }
         },
         "9": {
-            "class_type": "SaveImage",
+            "class_type": "PreviewImage",
             "inputs": {
-                "filename_prefix": "text_logo",
                 "images": ["8", 0]
+            }
+        },
+        "10": {
+            "class_type": "LoraLoader",
+            "inputs": {
+                "lora_name": "logo_sdxl.safetensors",
+                "strength_model": 1.0,
+                "strength_clip": 1.0,
+                "model": ["4", 0],
+                "clip": ["4", 1]
             }
         }
     }
-
     prompt_response = requests.post(
         f"{comfyui_url}/prompt",
         json={
@@ -102,7 +113,7 @@ not a grid, not multiple options, not a logo sheet,
 
     prompt_id = prompt_response.json().get("prompt_id")
 
-    for _ in range(60):
+    for _ in range(300):
         history_response = requests.get(
             f"{comfyui_url}/history/{prompt_id}",
             timeout=30
@@ -119,7 +130,7 @@ not a grid, not multiple options, not a logo sheet,
                     image = images[0]
                     filename = image["filename"]
                     subfolder = image.get("subfolder", "")
-                    image_type = image.get("type", "output")
+                    image_type = image.get("type", "temp")
 
                     image_url = (
                         f"{comfyui_url}/view"
