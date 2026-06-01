@@ -5,6 +5,8 @@ import { BrowserRouter } from "react-router-dom";
 import Home from "./pages/Home";
 import TrendPage from "./pages/TrendPage";
 
+import GeneratePage from "./pages/GeneratePage";
+
 /* css */
 import "./css/index.css";
 import "./css/App.css";
@@ -16,6 +18,9 @@ function App() {
       <Routes>
         <Route path={URL.HOME} element={<Home />} />
         <Route path={URL.TREND} element={<TrendPage />} />
+
+        <Route path={URL.GENERATE} element={<GeneratePage />} />
+
         <Route path="*" element={<Navigate to={URL.HOME} />} />
       </Routes>
     </BrowserRouter>

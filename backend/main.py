@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import post, text_logo, trend, user
+from routes import post, text_logo, trend, user, admin_route
 
 app = FastAPI()
 app.add_middleware(
@@ -18,8 +18,11 @@ app.add_middleware(
 )
 
 
-# FR-05기능 추가 라우터
-app.include_router(text_logo.router, prefix="/text-logo")
+# FR-05기능 추가 라우터 (자연어 -> 이미지 생성 기능)
+app.include_router(text_logo.router)
+
+# FR-19기능 추가 라우터 (관리자- 사용자 목록 조회 기능)
+app.include_router(admin_route.router)
 
 # FR-08기능 추가 라우터
 # from routes.generate_route import (
