@@ -1,3 +1,4 @@
+# --- 기본 요구사항 ---
 fastapi
 uvicorn
 SQLAlchemy
@@ -7,3 +8,11 @@ pandasql
 python-dotenv
 bcrypt
 joblib
+
+# --- 도용 탐지 파이프라인(FR01, 02, 04) 추가 요구사항 ---
+python-multipart      
+aiofiles              
+sentence-transformers 
+Pillow                
+faiss-cpu             
+aiosqlite
