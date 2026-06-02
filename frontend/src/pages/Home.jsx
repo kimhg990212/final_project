@@ -1,15 +1,8 @@
-import { useState } from "react";
-import Header from "../components/common/Header";
-import Footer from "../components/common/Footer";
 import "../css/Home.css";
 
 function Home() {
-  const [showLogin, setShowLogin] = useState(false);
-
   return (
     <div className="home-page">
-      <Header />
-
       <section className="hero">
         <div className="hero-text">
           <span className="badge">AI Trademark & Logo Service</span>
@@ -65,7 +58,6 @@ function Home() {
         </a>
       </section>
 
-      <Footer />
     </div>
   );
 }

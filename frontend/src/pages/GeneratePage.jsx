@@ -1,6 +1,4 @@
 import { useState } from "react";
-import Header from "../components/common/Header";
-import Footer from "../components/common/Footer";
 import "../css/generate.css";
 
 function GeneratePage() {
@@ -17,10 +15,7 @@ function GeneratePage() {
   };
 
   return (
-    <>
-      <Header />
-
-      <main className="generate-page">
+    <main className="generate-page">
         <section className="generate-header">
           <span>AI Logo Generator</span>
 
@@ -146,10 +141,7 @@ function GeneratePage() {
             )}
           </div>
         </section>
-      </main>
-
-      <Footer />
-    </>
+    </main>
   );
 }
 

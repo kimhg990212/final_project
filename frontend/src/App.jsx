@@ -1,27 +1,75 @@
-// import { StrictMode } from "react";  // 보통 main.jsx에서 StrictMode를 쓰니까 App.jsx에선 필요 없음
-import { Routes, Route, Navigate } from "react-router-dom";
-import { BrowserRouter } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 
 import Home from "./pages/Home";
 import TrendPage from "./pages/TrendPage";
-
 import GeneratePage from "./pages/GeneratePage";
-
-/* css */
-import "./css/index.css";
-import "./css/App.css";
+import MyPage from "./pages/MyPage";
+import Header from "./components/common/Header";
+import Footer from "./components/common/Footer";
 import { URL } from "./constants";
 
+import "./css/index.css";
+import "./css/App.css";
+
+const authStorageKey = "logoGuard:isLoggedIn";
+
+function SiteLayout({ isLoggedIn, onLogin, onSignup, onLogout }) {
+  return (
+    <>
+      <Header
+        isLoggedIn={isLoggedIn}
+        onLogin={onLogin}
+        onSignup={onSignup}
+        onLogout={onLogout}
+      />
+      <Outlet />
+      <Footer />
+    </>
+  );
+}
+
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return window.localStorage.getItem(authStorageKey) === "true";
+  });
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      window.localStorage.setItem(authStorageKey, "true");
+      return;
+    }
+
+    window.localStorage.removeItem(authStorageKey);
+  }, [isLoggedIn]);
+
+  const handleLogin = () => setIsLoggedIn(true);
+  const handleSignup = () => setIsLoggedIn(true);
+  const handleLogout = () => setIsLoggedIn(false);
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path={URL.HOME} element={<Home />} />
-        <Route path={URL.TREND} element={<TrendPage />} />
+        <Route
+          element={
+            <SiteLayout
+              isLoggedIn={isLoggedIn}
+              onLogin={handleLogin}
+              onSignup={handleSignup}
+              onLogout={handleLogout}
+            />
+          }
+        >
+          <Route path={URL.HOME} element={<Home />} />
+          <Route path={URL.TREND} element={<TrendPage />} />
+          <Route path={URL.GENERATE} element={<GeneratePage />} />
+          <Route
+            path={URL.MYPAGE}
+            element={isLoggedIn ? <MyPage /> : <Navigate to={URL.HOME} replace />}
+          />
+        </Route>
 
-        <Route path={URL.GENERATE} element={<GeneratePage />} />
-
-        <Route path="*" element={<Navigate to={URL.HOME} />} />
+        <Route path="*" element={<Navigate to={URL.HOME} replace />} />
       </Routes>
     </BrowserRouter>
   );
