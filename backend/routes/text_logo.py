@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy.orm import Session
 
+from utils.database import get_db
 from controllers.text_logo_controller import generate_logo_controller
 
 router = APIRouter(
@@ -11,9 +12,11 @@ router = APIRouter(
 
 class TextLogoRequest(BaseModel):
     text: str
-    user_id: Optional[int] = None
-
+    user_id: int
 
 @router.post("/generate")
-def generate_logo(request: TextLogoRequest):
-    return generate_logo_controller(request)
+def generate_logo(
+    request: TextLogoRequest,
+    db: Session = Depends(get_db)
+):
+    return generate_logo_controller(request, db)

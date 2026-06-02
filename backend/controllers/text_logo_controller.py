@@ -1,7 +1,8 @@
 from services.text_logo_service import generate_text_logo
 
-def generate_logo_controller(request):
+def generate_logo_controller(request, db):
     return generate_text_logo(
         user_text=request.text,
-        user_id=request.user_id
+        user_id=request.user_id,
+        db=db
     )

@@ -79,9 +79,10 @@ Professional brand identity logo.
             }
         },
         "9": {
-            "class_type": "PreviewImage",
+            "class_type": "SaveImage",
             "inputs": {
-                "images": ["8", 0]
+                "images": ["8", 0],
+                "filename_prefix": "text_to_image"
             }
         },
         "10": {
@@ -130,8 +131,10 @@ Professional brand identity logo.
                     image = images[0]
                     filename = image["filename"]
                     subfolder = image.get("subfolder", "")
-                    image_type = image.get("type", "temp")
+                    image_type = image.get("type", "output")
 
+                    image_path =f"output/{filename}" if not subfolder else f"output/{subfolder}/{filename}"
+                    
                     image_url = (
                         f"{comfyui_url}/view"
                         f"?filename={filename}"
@@ -140,6 +143,7 @@ Professional brand identity logo.
                     )
 
                     return {
+                        "image_path":image_path,
                         "image_url": image_url,
                         "status": "success",
                         "message": "이미지 생성이 완료되었습니다."
