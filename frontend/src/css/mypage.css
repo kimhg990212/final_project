@@ -46,6 +46,7 @@
   border-radius: 24px;
   background: #fbfbfd;
   border: 1px solid #eceef6;
+  min-width: 0;
 }
 
 .panel-title h2 {
@@ -113,6 +114,7 @@
   margin-top: 8px;
   font-size: 18px;
   color: #1f2330;
+  overflow-wrap: anywhere;
 }
 
 .profile-actions {
@@ -145,20 +147,43 @@
   box-sizing: border-box;
 }
 
-.primary-action,
-.danger-action,
+.primary-action {
+  color: #5b4bdb;
+  background: transparent;
+  border: 1px solid #5b4bdb;
+}
+
+.danger-action {
+  color: #d33b3b;
+  background: transparent;
+  border: 1px solid #d33b3b;
+}
+
 .pagination-button.active,
 .activity-tab.active {
   color: white;
   background: #5b4bdb;
 }
 
-.primary-action:hover,
-.danger-action:hover,
+.primary-action:hover {
+  background: rgba(91, 75, 219, 0.06);
+  transform: translateY(-1px);
+}
+
+.danger-action:hover {
+  background: rgba(211, 59, 59, 0.06);
+  transform: translateY(-1px);
+}
+
 .pagination-button:hover,
 .activity-tab:hover {
   background: #493ec7;
+  color: white;
   transform: translateY(-1px);
+}
+
+.activity-tab:hover span {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .secondary-action,
@@ -222,7 +247,10 @@
   gap: 12px;
   margin-top: 18px;
   height: 360px;
+  align-content: start;
+  grid-auto-rows: 112px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .activity-item {
@@ -236,6 +264,7 @@
   border-radius: 18px;
   background: white;
   border: 1px solid #eceef6;
+  min-width: 0;
 }
 
 .activity-chip {
@@ -245,6 +274,8 @@
   text-align: center;
   font-size: 13px;
   font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .activity-chip.search {
@@ -264,7 +295,7 @@
 
 .activity-topline {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
@@ -272,6 +303,7 @@
 .activity-topline h3 {
   margin: 0;
   font-size: 18px;
+  white-space: nowrap;
 }
 
 .activity-topline span {
@@ -284,15 +316,15 @@
   margin: 8px 0 0;
   color: #4d5568;
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-content,
 .ghost-action {
   align-self: start;
+  min-width: 0;
 }
 
 .activity-empty {
@@ -306,6 +338,7 @@
   justify-content: center;
   gap: 12px;
   margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .pagination-indicator {
@@ -360,6 +393,11 @@
     grid-template-columns: 1fr;
   }
 
+  .mypage-panel,
+  .mypage-shell {
+    min-width: 0;
+  }
+
   .activity-item {
     grid-template-columns: 1fr;
     height: auto;
@@ -372,6 +410,17 @@
   .activity-topline {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .activity-topline span {
+    white-space: normal;
+  }
+
+  .activity-topline h3,
+  .activity-content p {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 }
 
@@ -392,6 +441,12 @@
     flex-direction: column;
   }
 
+  .activity-tab,
+  .pagination-button {
+    width: 100%;
+    min-width: 0;
+  }
+
   .primary-action,
   .secondary-action,
   .danger-action,
@@ -399,5 +454,12 @@
   .pagination-button,
   .activity-tab {
     width: 100%;
+  }
+
+  .activity-topline h3,
+  .activity-content p,
+  .profile-row input {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
