@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from routes import post, text_logo, trend, user, admin_route #, plagiarism_route
+from routes import post, text_logo, trend, user, admin_route , plagiarism_route
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 # 도용 탐지 기능 추가 라우터(도용 탐지 -> 결과 및 리포트 출력)
-# app.include_router(plagiarism_route.router)
+app.include_router(plagiarism_route.router)
 
 # FR-05기능 추가 라우터 (자연어 -> 이미지 생성 기능)
 app.include_router(text_logo.router)

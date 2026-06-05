@@ -74,6 +74,10 @@ npm run dev
 
 ### backend 설치
 
+[faiss_text](https://drive.google.com/file/d/131Bd7yZPfyC2pI3nX439SXyU-IbRe4cN/view?usp=sharing)
+
+[faiss_image](https://drive.google.com/file/d/1EI63FpxH6hh0u_Ynxb4OSrUvlQPBe9gJ/view?usp=sharing)
+
 ```bash
 # 폴더 이동
 cd backend
@@ -83,6 +87,11 @@ conda create final_pj_py312 python==3.12 -y
 conda activate final_pj_py312
 # 패키지 설치
 pip install -r requirements.txt
+# vector store 다운로드
+# backend/index 폴더로 이동
+# backend/index
+# ㄴ faiss_image.index
+# ㄴ faiss_text.index
 ```
 
 ### backend 실행
