@@ -1,0 +1,16 @@
+/* App shell layout */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+.common-footer {
+  margin-top: auto;
+  flex-shrink: 0;
+}

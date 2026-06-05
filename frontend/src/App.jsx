@@ -16,16 +16,18 @@ const authStorageKey = "logoGuard:isLoggedIn";
 
 function SiteLayout({ isLoggedIn, onLogin, onSignup, onLogout }) {
   return (
-    <>
+    <div className="app-shell">
       <Header
         isLoggedIn={isLoggedIn}
         onLogin={onLogin}
         onSignup={onSignup}
         onLogout={onLogout}
       />
-      <Outlet />
+      <main className="app-content">
+        <Outlet />
+      </main>
       <Footer />
-    </>
+    </div>
   );
 }
 
@@ -65,7 +67,13 @@ function App() {
           <Route path={URL.GENERATE} element={<GeneratePage />} />
           <Route
             path={URL.MYPAGE}
-            element={isLoggedIn ? <MyPage /> : <Navigate to={URL.HOME} replace />}
+            element={
+              isLoggedIn ? (
+                <MyPage onDeleteAccount={handleLogout} />
+              ) : (
+                <Navigate to={URL.HOME} replace />
+              )
+            }
           />
         </Route>
 

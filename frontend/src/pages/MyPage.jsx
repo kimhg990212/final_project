@@ -83,10 +83,11 @@ const tabLabels = [
 
 const pageSize = 3;
 
-function MyPage() {
+function MyPage({ onDeleteAccount }) {
   const [profile, setProfile] = useState(initialProfile);
   const [nickname, setNickname] = useState(initialProfile.nickname);
   const [email, setEmail] = useState(initialProfile.email);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -130,6 +131,22 @@ function MyPage() {
     setCurrentPage(1);
   };
 
+  const handleEditStart = () => {
+    if (isDeleted) {
+      return;
+    }
+
+    setIsEditingProfile(true);
+    setFeedbackMessage("");
+  };
+
+  const handleEditCancel = () => {
+    setNickname(profile.nickname);
+    setEmail(profile.email);
+    setIsEditingProfile(false);
+    setFeedbackMessage("수정을 취소했습니다.");
+  };
+
   const handleSave = () => {
     if (isDeleted) {
       setFeedbackMessage("탈퇴한 계정은 수정할 수 없습니다.");
@@ -141,13 +158,9 @@ function MyPage() {
       nickname: nickname.trim() || current.nickname,
       email: email.trim() || current.email,
     }));
-    setFeedbackMessage("개인정보가 저장되었습니다.");
-  };
 
-  const handleReset = () => {
-    setNickname(profile.nickname);
-    setEmail(profile.email);
-    setFeedbackMessage("변경 사항을 초기화했습니다.");
+    setIsEditingProfile(false);
+    setFeedbackMessage("개인정보가 저장되었습니다.");
   };
 
   const handleDownload = (activity) => {
@@ -178,6 +191,7 @@ function MyPage() {
     setIsDeleted(true);
     setIsDeleteConfirmOpen(false);
     setFeedbackMessage("회원 탈퇴가 완료되었습니다.");
+    onDeleteAccount();
   };
 
   return (
@@ -202,7 +216,7 @@ function MyPage() {
                   type="text"
                   value={nickname}
                   onChange={(event) => setNickname(event.target.value)}
-                  disabled={isDeleted}
+                  disabled={isDeleted || !isEditingProfile}
                 />
               </label>
 
@@ -212,7 +226,7 @@ function MyPage() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  disabled={isDeleted}
+                  disabled={isDeleted || !isEditingProfile}
                 />
               </label>
 
@@ -229,12 +243,35 @@ function MyPage() {
             </div>
 
             <div className="profile-actions">
-              <button type="button" className="secondary-action" onClick={handleReset} disabled={isDeleted}>
-                초기화
-              </button>
-              <button type="button" className="primary-action" onClick={handleSave} disabled={isDeleted}>
-                개인정보 수정
-              </button>
+              {!isEditingProfile ? (
+                <button
+                  type="button"
+                  className="primary-action"
+                  onClick={handleEditStart}
+                  disabled={isDeleted}
+                >
+                  수정
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="secondary-action"
+                    onClick={handleEditCancel}
+                    disabled={isDeleted}
+                  >
+                    수정 취소
+                  </button>
+                  <button
+                    type="button"
+                    className="primary-action"
+                    onClick={handleSave}
+                    disabled={isDeleted}
+                  >
+                    개인정보 저장
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="danger-action"
@@ -331,7 +368,11 @@ function MyPage() {
             <p>탈퇴를 확정하면 이 계정은 비활성 상태로 전환됩니다.</p>
 
             <div className="modal-actions">
-              <button type="button" className="secondary-action" onClick={() => setIsDeleteConfirmOpen(false)}>
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={() => setIsDeleteConfirmOpen(false)}
+              >
                 취소
               </button>
               <button type="button" className="danger-action" onClick={handleDeleteConfirm}>
