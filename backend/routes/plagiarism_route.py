@@ -1,29 +1,22 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from typing import Optional
 
-from backend.controllers import plagiarism_controller
-from backend.models.schemas import PlagiarismDetectionResponse
+from controllers import plagiarism_controller
+from models.schemas import PlagiarismDetectionResponse
+from utils.database import get_db
 
 router = APIRouter(prefix="/api/v1/detect", tags=["도용 탐지 분석 API"])
 
-# --- DB 및 Auth 가상 의존성 주입부 (DB팀 인터페이스 대기용) ---
-async def get_mock_db():
-    """향후 실제 AsyncSession 대치용 스텁"""
-    yield None
-
 async def get_mock_current_user():
     """FR-01-08: OAuth 2.0 토큰 기반 로그인 사용자 검증 스텁"""
-    # 토큰 파싱이 완료되어 로그인된 유저의 정보를 반환한다고 가정
     return {"id": "user_minhyuk_2026", "role": "authenticated_user"}
-# --------------------------------------------------------
 
 @router.post("/", response_model=PlagiarismDetectionResponse, status_code=200)
 async def detect_plagiarism_endpoint(
-    # 텍스트와 이미지 파일 동시 전송을 위해 Form 및 File 포맷 적용
     text_query: Optional[str] = Form(None, description="상표명 또는 브랜드 아이디어 설명 자연어"),
     image_file: Optional[UploadFile] = File(None, description="도용 검사 대상 로고/상표 이미지 파일 (PNG, JPG)"),
-    db: AsyncSession = Depends(get_mock_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(get_mock_current_user)
 ):
     """

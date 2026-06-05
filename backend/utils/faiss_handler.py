@@ -8,8 +8,8 @@ import numpy as np
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.dirname(CURRENT_DIR) 
 
-TEXT_INDEX_PATH = os.path.join(BACKEND_DIR, "data", "faiss_text.index")
-IMAGE_INDEX_PATH = os.path.join(BACKEND_DIR, "data", "faiss_image.index")
+TEXT_INDEX_PATH = os.path.join(BACKEND_DIR, "index", "faiss_text.index")
+IMAGE_INDEX_PATH = os.path.join(BACKEND_DIR, "index", "faiss_image.index")
 
 
 # ==========================================

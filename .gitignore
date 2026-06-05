@@ -8,3 +8,7 @@ __pycache__
 data/
 docker/database/mariadb_data/
 ~$01_WBS.xlsx
+
+backend/venv/
+backend/index/
+uploads/

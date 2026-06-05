@@ -1,17 +1,17 @@
 import logging
 from fastapi import HTTPException, status, UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
 
-from backend.services import plagiarism_service
-from backend.utils.file_handler import validate_file_and_save
-from backend.models.schemas import PlagiarismDetectionResponse
+from services import plagiarism_service
+from utils.file_handler import validate_file_and_save
+from models.schemas import PlagiarismDetectionResponse
 
 logger = logging.getLogger(__name__)
 
 async def handle_plagiarism_detection(
-    db: AsyncSession,
+    db: Session,
     user_id: str,
     text_query: Optional[str] = None,
     image_file: Optional[UploadFile] = None
