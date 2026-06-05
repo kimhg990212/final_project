@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import Home from "./pages/Home";
 import TrendPage from "./pages/TrendPage";
+import DetectPage from "./pages/DetectPage";
 import GeneratePage from "./pages/GeneratePage";
 import MyPage from "./pages/MyPage";
 import Header from "./components/common/Header";
@@ -64,6 +71,7 @@ function App() {
         >
           <Route path={URL.HOME} element={<Home />} />
           <Route path={URL.TREND} element={<TrendPage />} />
+          <Route path="/detect" element={<DetectPage />} />
           <Route path={URL.GENERATE} element={<GeneratePage />} />
           <Route
             path={URL.MYPAGE}

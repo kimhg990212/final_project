@@ -1,2 +1,2 @@
 @echo off
-uvicorn backend.main:app --reload
+uvicorn backend.main:app --reload --port 5000

@@ -1,78 +1,105 @@
-# backend/scripts/build_image_index.py
 import os
 import sys
-import json
 import asyncio
+import tempfile
+import requests
 import numpy as np
 import faiss
-from pathlib import Path
+from urllib.parse import urlparse
 
-# 경로 설정
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.dirname(CURRENT_DIR)
+# Persist image FAISS index under backend/index
+OUTPUT_INDEX_PATH = os.path.join(BACKEND_DIR, "index", "faiss_image.index")
 
-LABEL_ROOT = os.path.join(BACKEND_DIR, "data", "상표이미지_라벨")
-SOURCE_ROOT = os.path.join(BACKEND_DIR, "data", "상표이미지_원천")
-OUTPUT_INDEX_PATH = os.path.join(BACKEND_DIR, "data", "faiss_image.index")
-
-# 모듈 로드
 sys.path.append(BACKEND_DIR)
-from backend.utils.ai_inference import embed_image
+from utils.ai_inference import embed_image
+from utils.database import SessionLocal
+from sqlalchemy import text
 
+
+def is_remote_url(path: str) -> bool:
+    if not path:
+        return False
+    parsed = urlparse(path)
+    return parsed.scheme in {"http", "https"}
+
+
+def download_remote_image(url: str) -> str:
+    response = requests.get(url, stream=True, timeout=15)
+    response.raise_for_status()
+    suffix = os.path.splitext(urlparse(url).path)[1] or ".jpg"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                tmp.write(chunk)
+        return tmp.name
 async def build_unified_image_index():
-    print("🚀 데이터셋 통합 인덱싱을 시작합니다...")
-    
-    # 1. 원천 폴더의 모든 이미지 경로 매핑 (재귀 탐색)
-    print("🔍 원천 이미지 파일 탐색 중 (시간이 소요될 수 있습니다)...")
-    img_map = {p.name: p for p in Path(SOURCE_ROOT).rglob("*.*") if p.suffix.lower() in ['.jpg', '.png', '.jpeg']}
-    print(f"✅ 총 {len(img_map)}개의 이미지 파일을 매핑했습니다.")
-    
-    results = [] # (vector, id) 튜플 저장용
-    
-    # 2. 라벨 폴더 JSON 탐색
-    json_files = list(Path(LABEL_ROOT).rglob("*.json"))
-    print(f"📂 총 {len(json_files)}개의 라벨 묶음을 발견했습니다.")
+    print("🚀 DB 기반 이미지 FAISS 인덱스 빌드 작업을 시작합니다...")
+    os.makedirs(os.path.dirname(OUTPUT_INDEX_PATH), exist_ok=True)
 
-    for idx, json_path in enumerate(json_files):
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            
-        for img_info in data.get('images', []):
-            file_name = img_info.get('fileName')
-            img_id = img_info.get('id')
-            
-            # 매핑된 경로에서 이미지 확인
-            img_path = img_map.get(file_name)
-            
-            if img_path and img_path.exists():
+    with SessionLocal() as session:
+        res = session.execute(text("SELECT id, application_number, image_url FROM trademark_trends ORDER BY id"))
+        metadata_records = res.mappings().all()
+
+    total_count = len(metadata_records)
+    print(f"📊 총 {total_count}건의 DB 메타데이터를 로드했습니다.")
+
+    if total_count == 0:
+        print("⚠️ DB에 적재된 상표 메타데이터가 없습니다. 먼저 데이터를 적재하세요.")
+        return
+
+    results = []
+
+    for idx, metadata in enumerate(metadata_records, start=1):
+        image_url = metadata["image_url"]
+        if not image_url:
+            print(f"⚠️ ID {metadata['id']}({metadata['application_number']})에 이미지 URL이 없습니다.")
+            continue
+
+        temp_path = None
+        try:
+            if is_remote_url(image_url):
+                temp_path = download_remote_image(image_url)
+                image_path = temp_path
+            else:
+                image_path = image_url if os.path.exists(image_url) else None
+
+            if not image_path or not os.path.exists(image_path):
+                print(f"⚠️ ID {metadata['id']} 이미지 파일을 찾을 수 없습니다: {image_url}")
+                continue
+
+            vector = await embed_image(image_path)
+            results.append((vector, metadata["id"]))
+
+            if idx % 100 == 0:
+                print(f"⏳ {idx}/{total_count}건 이미지 임베딩 완료...")
+
+        except Exception as e:
+            print(f"❌ ID {metadata['id']} 이미지 임베딩 실패: {e}")
+            continue
+
+        finally:
+            if temp_path and os.path.exists(temp_path):
                 try:
-                    # 이미지 임베딩 실행
-                    i_vec = await embed_image(str(img_path))
-                    results.append((i_vec, int(img_id)))
-                except Exception as e:
-                    print(f"❌ 임베딩 오류 스킵 ({file_name}): {str(e)[:30]}...")
-                    continue
-        
-        if (idx + 1) % 10 == 0:
-            print(f"⏳ 진행 중... ({idx + 1}/{len(json_files)} 폴더 처리)")
+                    os.remove(temp_path)
+                except OSError:
+                    pass
 
-    # 3. 데이터 동기화 및 FAISS 저장
-    if results:
-        image_vectors, valid_image_ids = zip(*results)
-        image_np = np.array(image_vectors).astype('float32')
-        image_ids_np = np.array(valid_image_ids).astype('int64')
-        
-        print(f"💾 {len(image_np)}개의 이미지 데이터 인덱싱 시작...")
-        
-        # FAISS 인덱스 생성 (512차원)
-        index = faiss.IndexIDMap(faiss.IndexFlatL2(512))
-        index.add_with_ids(image_np, image_ids_np)
-        
-        # 결과 저장
-        faiss.write_index(index, OUTPUT_INDEX_PATH)
-        print(f"✨ 완료! 인덱스 파일 생성 성공: {OUTPUT_INDEX_PATH}")
-    else:
-        print("⚠️ 유효한 이미지 데이터가 없습니다. 경로를 다시 확인해주세요.")
+    if not results:
+        print("❌ 유효한 이미지 벡터가 없어 인덱스를 생성하지 않습니다.")
+        return
+
+    image_vectors, image_ids = zip(*results)
+    image_np = np.array(image_vectors, dtype='float32')
+    ids_np = np.array(image_ids, dtype='int64')
+
+    index = faiss.IndexIDMap(faiss.IndexFlatL2(image_np.shape[1]))
+    index.add_with_ids(image_np, ids_np)
+    faiss.write_index(index, OUTPUT_INDEX_PATH)
+
+    print(f"✅ DB 기반 이미지 FAISS 인덱스 생성 완료! ({len(image_ids)}건) 경로: {OUTPUT_INDEX_PATH}")
+
 
 if __name__ == "__main__":
     asyncio.run(build_unified_image_index())
