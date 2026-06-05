@@ -1,18 +1,33 @@
-# --- 기본 요구사항 ---
-fastapi
+fastapi==0.115.0
 uvicorn
-SQLAlchemy
+python-multipart
+pydantic==2.9.2
+pydantic[email]
+email-validator
+pydantic-settings
+passlib==1.7.4
+bcrypt==4.0.1
+aiofiles
+
+joblib
 pandas
-numpy
 pandasql
 python-dotenv
-bcrypt
-joblib
+pymysql
+requests
+lxml
 
-# --- 도용 탐지 파이프라인(FR01, 02, 04) 추가 요구사항 ---
-python-multipart      
-aiofiles              
-sentence-transformers 
-Pillow                
-faiss-cpu             
-aiosqlite
+numpy==1.26.4
+pillow==10.4.0
+
+torch==2.3.1
+torchvision==0.18.1
+transformers==4.44.2
+
+faiss-cpu==1.8.0.post1
+
+diffusers==0.30.3
+accelerate==0.34.2
+safetensors==0.4.5
+
+sqlalchemy==2.0.35

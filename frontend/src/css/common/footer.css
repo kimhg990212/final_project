@@ -1,0 +1,31 @@
+.common-footer {
+  margin-top: 80px;
+  padding: 40px 60px;
+
+  background: #111827;
+  color: #d1d5db;
+
+  text-align: center;
+  border-top: 1px solid #1f2937;
+}
+
+.common-footer p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.common-footer p:first-child {
+  color: white;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .common-footer {
+    padding: 30px 20px;
+  }
+
+  .common-footer p {
+    font-size: 13px;
+  }
+}

@@ -72,6 +72,19 @@ cd frontend
 npm run dev
 ```
 
+### backend 설치
+
+```bash
+# 폴더 이동
+cd backend
+# 가상환경 생성
+conda create final_pj_py312 python==3.12 -y
+# 가상환경 활성화
+conda activate final_pj_py312
+# 패키지 설치
+pip install -r requirements.txt
+```
+
 ### backend 실행
 
 ```bash
