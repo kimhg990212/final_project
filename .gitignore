@@ -4,7 +4,7 @@ __pycache__
 
 .vscode
 .env
-
+venv/
 docker/database/mariadb_data/
 
 ~$01_WBS.xlsx
