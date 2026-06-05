@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from routes import post, text_logo, trend, user, admin_route , plagiarism_route
+from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -87,6 +87,7 @@ app.include_router(trend.router, prefix="/trends")
 app.include_router(post.router, prefix="/posts")
 
 app.include_router(user.router, prefix= "/users")
+app.include_router(google_auth.router, prefix="/users/google")
 
 if __name__ == "__main__":
     uvicorn.run(

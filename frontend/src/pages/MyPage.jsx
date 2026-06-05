@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getGoogleMe } from "../api/auth";
 import "../css/mypage.css";
 
 const initialProfile = {
-  nickname: "Logo Keeper",
-  email: "keeper@logoguard.ai",
+  nickname: "",
+  email: "",
   joinedAt: "2026.03.18",
 };
 
@@ -83,7 +84,7 @@ const tabLabels = [
 
 const pageSize = 3;
 
-function MyPage({ onDeleteAccount }) {
+function MyPage({ onDeleteAccount, googleToken }) {
   const [profile, setProfile] = useState(initialProfile);
   const [nickname, setNickname] = useState(initialProfile.nickname);
   const [email, setEmail] = useState(initialProfile.email);
@@ -93,6 +94,47 @@ function MyPage({ onDeleteAccount }) {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      if (!googleToken) {
+        return;
+      }
+
+      try {
+        const user = await getGoogleMe({ token: googleToken });
+        if (!isMounted) {
+          return;
+        }
+
+        const nextProfile = {
+          nickname: user.nickname || "",
+          email: user.email || "",
+          joinedAt: initialProfile.joinedAt,
+        };
+
+        setProfile(nextProfile);
+        setNickname(nextProfile.nickname);
+        setEmail(nextProfile.email);
+      } catch (error) {
+        if (isMounted) {
+          setFeedbackMessage(
+            error instanceof Error
+              ? error.message
+              : "API 요청에 실패하였습니다. 잠시후 시도해주세요.",
+          );
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [googleToken]);
 
   const filteredActivities = useMemo(() => {
     if (activeTab === "all") {
