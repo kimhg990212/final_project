@@ -1,8 +1,11 @@
 import { NavLink } from "react-router-dom";
-import "../../css/common/header.css";
-import { URL } from "../../constants";
 
-function Header({ isLoggedIn, onLogin, onSignup, onLogout }) {
+import { URL } from "../../constants";
+import "../../css/common/header.css";
+
+import { GoogleLogin } from "@react-oauth/google";
+
+function Header({ isLoggedIn, onGoogleLogin, onLogout, googleClientId }) {
   const navItems = [
     { to: URL.TREND, label: "트렌드" },
     { to: "/detect", label: "유사 검색" },
@@ -33,25 +36,37 @@ function Header({ isLoggedIn, onLogin, onSignup, onLogout }) {
 
         <div className="header-auth">
           {!isLoggedIn ? (
-            <>
-              <button
-                type="button"
-                className="header-auth-link secondary"
-                onClick={onSignup}
-              >
-                회원가입
-              </button>
+            googleClientId ? (
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  console.log(
+                    "Google credential response:",
+                    credentialResponse,
+                  );
+                  console.log(
+                    "Google credential token:",
+                    credentialResponse?.credential,
+                  );
+                  onGoogleLogin?.(credentialResponse);
+                }}
+                onError={() => console.log("Google Login Failed")}
+                useOneTap={false}
+                shape="pill"
+                theme="outline"
+              />
+            ) : (
               <button
                 type="button"
                 className="header-auth-link primary"
-                onClick={onLogin}
+                disabled
+                title="VITE_GOOGLE_CLIENT_ID를 설정해야 Google 로그인이 활성화됩니다"
               >
-                로그인
+                구글 로그인 불가
               </button>
-            </>
+            )
           ) : (
             <>
-              <span className="header-user-chip">로그인됨</span>
+              <span className="header-user-chip">구글 로그인됨</span>
               <button
                 type="button"
                 className="header-auth-link secondary"

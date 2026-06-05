@@ -6,6 +6,7 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import Home from "./pages/Home";
 import TrendPage from "./pages/TrendPage";
@@ -21,14 +22,14 @@ import "./css/App.css";
 
 const authStorageKey = "logoGuard:isLoggedIn";
 
-function SiteLayout({ isLoggedIn, onLogin, onSignup, onLogout }) {
+function SiteLayout({ isLoggedIn, onGoogleLogin, onLogout }) {
   return (
     <div className="app-shell">
       <Header
         isLoggedIn={isLoggedIn}
-        onLogin={onLogin}
-        onSignup={onSignup}
+        onGoogleLogin={onGoogleLogin}
         onLogout={onLogout}
+        googleClientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
       />
       <main className="app-content">
         <Outlet />
@@ -52,19 +53,22 @@ function App() {
     window.localStorage.removeItem(authStorageKey);
   }, [isLoggedIn]);
 
-  const handleLogin = () => setIsLoggedIn(true);
-  const handleSignup = () => setIsLoggedIn(true);
+  const handleGoogleLogin = (credentialResponse) => {
+    console.log("Google credential response:", credentialResponse);
+    console.log("Google credential token:", credentialResponse?.credential);
+    setIsLoggedIn(true);
+  };
   const handleLogout = () => setIsLoggedIn(false);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  return (
+  const appContent = (
     <BrowserRouter>
       <Routes>
         <Route
           element={
             <SiteLayout
               isLoggedIn={isLoggedIn}
-              onLogin={handleLogin}
-              onSignup={handleSignup}
+              onGoogleLogin={handleGoogleLogin}
               onLogout={handleLogout}
             />
           }
@@ -88,6 +92,16 @@ function App() {
         <Route path="*" element={<Navigate to={URL.HOME} replace />} />
       </Routes>
     </BrowserRouter>
+  );
+
+  if (!googleClientId) {
+    return appContent;
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      {appContent}
+    </GoogleOAuthProvider>
   );
 }
 
