@@ -32,3 +32,4 @@ safetensors==0.4.5
 
 sqlalchemy==2.0.35
 sentence_transformers
+pytesseract
