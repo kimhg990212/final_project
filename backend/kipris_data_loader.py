@@ -80,7 +80,7 @@ def parse_page(page_no, classification="", num_of_rows=500):
         ).dt.date
         items = df.to_dict(orient="records")
         sql = text("""
-            INSERT INTO trademark_trends
+            INSERT INTO kipris_trademarks
             (application_number, title, applicant_name, application_date,
             classification_code, vienna_code, application_status,
             image_url, big_image_url)
