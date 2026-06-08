@@ -1,0 +1,84 @@
+.admin-page {
+  min-height: 100vh;
+  padding: 40px 56px;
+  background: #f6f7fb;
+}
+
+.admin-page h1 {
+  margin-bottom: 28px;
+  font-size: 32px;
+}
+
+.admin-card {
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.admin-card h2 {
+  margin-bottom: 18px;
+  font-size: 22px;
+}
+
+.admin-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-card th,
+.admin-card td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.admin-card th {
+  background: #f1f3f8;
+  font-weight: 700;
+}
+
+.admin-card button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #5b4bdb;
+  color: white;
+  cursor: pointer;
+}
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.admin-search-input {
+  width: 220px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.admin-pagination button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #5b4bdb;
+  color: white;
+  cursor: pointer;
+}
+
+.admin-pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
