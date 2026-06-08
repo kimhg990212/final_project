@@ -12,6 +12,12 @@ router.add_api_route(
     dependencies=[Depends(require_google_user())],
 )
 router.add_api_route(
+    "/me",
+    google_auth.update_google_me_controller,
+    methods=["PATCH"],
+    dependencies=[Depends(require_google_user())],
+)
+router.add_api_route(
     "/admin/me",
     google_auth.read_google_admin_me_controller,
     methods=["GET"],
