@@ -134,7 +134,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
     const loadSearchActivities = async () => {
       setIsLoadingSearchActivities(true);
       try {
-        const items = await getSearchHistory();
+        const items = await getSearchHistory({ token: googleToken });
         if (!isMounted) return;
         setSearchActivities(items || []);
       } catch (error) {

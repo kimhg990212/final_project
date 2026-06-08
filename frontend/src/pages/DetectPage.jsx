@@ -8,7 +8,7 @@ function getRiskLevel(score) {
   return { label: "안전", colorClass: "risk-low" };
 }
 
-function DetectPage() {
+function DetectPage({ googleToken }) {
   const [textQuery, setTextQuery] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -46,7 +46,11 @@ function DetectPage() {
     setSubmittedText(textQuery.trim());
 
     try {
-      const response = await detectPlagiarism({ textQuery, imageFile });
+      const response = await detectPlagiarism({
+        textQuery,
+        imageFile,
+        token: googleToken,
+      });
       setResult(response);
     } catch (err) {
       setError(err.message);
@@ -145,7 +149,9 @@ function DetectPage() {
         </div>
 
         <div className="detect-result-panel">
-          <div className={`detect-card detect-summary-card${overallRisk ? ` detect-summary--${overallRisk.colorClass}` : ""}`}>
+          <div
+            className={`detect-card detect-summary-card${overallRisk ? ` detect-summary--${overallRisk.colorClass}` : ""}`}
+          >
             <h2>도용 분석 결과</h2>
 
             {!result ? (
@@ -161,13 +167,17 @@ function DetectPage() {
                   </div>
                   <div>
                     <p className="detect-summary-label">최고 유사도</p>
-                    <strong className={`detect-risk-value--${overallRisk.colorClass}`}>
+                    <strong
+                      className={`detect-risk-value--${overallRisk.colorClass}`}
+                    >
                       {result.highest_similarity}%
                     </strong>
                   </div>
                   <div>
                     <p className="detect-summary-label">위험 단계</p>
-                    <strong className={`detect-risk-value--${overallRisk.colorClass}`}>
+                    <strong
+                      className={`detect-risk-value--${overallRisk.colorClass}`}
+                    >
                       {overallRisk.label}
                     </strong>
                   </div>
@@ -201,7 +211,9 @@ function DetectPage() {
                       className={`detect-item detect-item--${risk.colorClass}`}
                     >
                       <div className="detect-item-header">
-                        <span className={`detect-item-risk-badge detect-item-risk-badge--${risk.colorClass}`}>
+                        <span
+                          className={`detect-item-risk-badge detect-item-risk-badge--${risk.colorClass}`}
+                        >
                           {risk.label}
                         </span>
                         <h4>{item.trademark_name}</h4>
@@ -213,7 +225,9 @@ function DetectPage() {
                       <div className="detect-item-bar-wrap">
                         <div
                           className={`detect-item-bar-fill detect-item-bar-fill--${risk.colorClass}`}
-                          style={{ width: `${Math.min(item.similarity_score, 100)}%` }}
+                          style={{
+                            width: `${Math.min(item.similarity_score, 100)}%`,
+                          }}
                         />
                       </div>
 
@@ -230,9 +244,19 @@ function DetectPage() {
                       )}
 
                       <div className="detect-item-meta">
-                        <span><b>출원번호</b> {item.application_number}</span>
-                        {item.applicant_name && <span><b>출원인</b> {item.applicant_name}</span>}
-                        {item.application_date && <span><b>출원일</b> {item.application_date}</span>}
+                        <span>
+                          <b>출원번호</b> {item.application_number}
+                        </span>
+                        {item.applicant_name && (
+                          <span>
+                            <b>출원인</b> {item.applicant_name}
+                          </span>
+                        )}
+                        {item.application_date && (
+                          <span>
+                            <b>출원일</b> {item.application_date}
+                          </span>
+                        )}
                       </div>
 
                       <p className="detect-item-explanation">
@@ -241,14 +265,21 @@ function DetectPage() {
 
                       <div className="detect-item-badges">
                         {item.explanation.image_contribution_pct > 0 && (
-                          <span>이미지 기여 {item.explanation.image_contribution_pct}%</span>
+                          <span>
+                            이미지 기여{" "}
+                            {item.explanation.image_contribution_pct}%
+                          </span>
                         )}
                         {submittedText && (
-                          <span>텍스트 기여 {item.explanation.text_contribution_pct}%</span>
+                          <span>
+                            텍스트 기여 {item.explanation.text_contribution_pct}
+                            %
+                          </span>
                         )}
                         {item.explanation.keyword_matched?.length > 0 && (
                           <span>
-                            키워드: {item.explanation.keyword_matched.join(" · ")}
+                            키워드:{" "}
+                            {item.explanation.keyword_matched.join(" · ")}
                           </span>
                         )}
                       </div>

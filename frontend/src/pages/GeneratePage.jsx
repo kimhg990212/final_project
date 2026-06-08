@@ -52,6 +52,34 @@ function GeneratePage({ userId }) {
     return `${BASE_URL}/${imageUrl}`;
   };
 
+  const handleDownload = async () => {
+    if (!result?.image_url) {
+      alert("다운로드할 이미지가 없습니다.");
+      return;
+    }
+
+    try {
+      const response = await fetch(getImageSrc(result.image_url));
+      if (!response.ok) {
+        throw new Error("이미지 다운로드에 실패했습니다.");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = downloadUrl;
+      anchor.download = `logo-${Date.now()}.png`;
+      anchor.click();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "이미지 다운로드에 실패했습니다.",
+      );
+    }
+  };
+
   return (
     <main className="generate-page">
       <section className="generate-header">
@@ -184,7 +212,9 @@ function GeneratePage({ userId }) {
                 </p>
               )}
 
-              <button className="save-btn">저장하기</button>
+              <button onClick={handleDownload} className="save-btn">
+                저장하기
+              </button>
             </div>
           )}
         </div>
