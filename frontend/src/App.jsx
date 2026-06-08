@@ -24,6 +24,20 @@ import "./css/App.css";
 
 const authStorageKey = "logoGuard:isLoggedIn";
 
+function DetectRouteGuard({ isLoggedIn }) {
+  useEffect(() => {
+    if (!isLoggedIn) {
+      alert("로그인이 필요한 서비스 입니다.");
+    }
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) {
+    return <Navigate to={URL.HOME} replace />;
+  }
+
+  return <DetectPage />;
+}
+
 function SiteLayout({ isLoggedIn, onGoogleLogin, onLogout }) {
   return (
     <div className="app-shell">
@@ -108,7 +122,10 @@ function App() {
         >
           <Route path={URL.HOME} element={<Home />} />
           <Route path={URL.TREND} element={<TrendPage />} />
-          <Route path="/detect" element={<DetectPage />} />
+          <Route
+            path="/detect"
+            element={<DetectRouteGuard isLoggedIn={isLoggedIn} />}
+          />
           <Route path={URL.GENERATE} element={<GeneratePage />} />
             <Route
             path={URL.MYPAGE}

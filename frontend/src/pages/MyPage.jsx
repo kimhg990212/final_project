@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { getGoogleMe, updateGoogleMe } from "../api/auth";
+import { getSearchHistory } from "../api/mypage";
 import "../css/mypage.css";
 
 const initialProfile = {
@@ -9,25 +10,17 @@ const initialProfile = {
   joinedAt: "2026.03.18",
 };
 
-const activityHistory = [
+const staticActivities = [
   {
-    id: 1,
-    type: "search",
-    title: "상표 검색",
-    description: "최근 검색한 상표 24건을 확인했습니다.",
-    time: "2026.06.02 09:40",
-    downloadable: true,
-  },
-  {
-    id: 2,
+    id: 1001,
     type: "create",
     title: "로고 생성",
-    description: "미니멀 스타일 시안 3개를 생성했습니다.",
+    description: "최근 생성한 로고 3건을 확인했습니다.",
     time: "2026.06.02 10:12",
     downloadable: true,
   },
   {
-    id: 3,
+    id: 1002,
     type: "download",
     title: "결과 다운로드",
     description: "최종 로고 결과물을 내려받았습니다.",
@@ -35,23 +28,15 @@ const activityHistory = [
     downloadable: true,
   },
   {
-    id: 4,
-    type: "search",
-    title: "상표 검색",
-    description: "브랜드명으로 유사 상표를 다시 확인했습니다.",
-    time: "2026.06.01 18:05",
-    downloadable: true,
-  },
-  {
-    id: 5,
+    id: 1003,
     type: "create",
     title: "아이디어 생성",
-    description: "색상 조합과 레이아웃 시안을 새로 만들었습니다.",
+    description: "새로운 브랜드 컨셉을 생성했습니다.",
     time: "2026.06.01 18:28",
     downloadable: true,
   },
   {
-    id: 6,
+    id: 1004,
     type: "download",
     title: "PNG 저장",
     description: "선택한 결과물을 PNG 파일로 저장했습니다.",
@@ -67,7 +52,35 @@ const tabLabels = [
   { key: "download", label: "다운로드" },
 ];
 
+const activityTypeLabels = {
+  search: "검색",
+  create: "생성",
+  download: "다운로드",
+};
+
 const pageSize = 3;
+
+function getSearchTitle() {
+  return "유사 검색";
+}
+
+function getSearchDescription(activity) {
+  const parts = [];
+
+  if (activity.input_text) {
+    parts.push(activity.input_text);
+  }
+
+  if (activity.highest_similarity !== undefined) {
+    parts.push(`최고 유사도 ${activity.highest_similarity}%`);
+  }
+
+  if (activity.total_found !== undefined) {
+    parts.push(`결과 ${activity.total_found}건`);
+  }
+
+  return parts.join(" | ") || "상세 설명이 없습니다.";
+}
 
 function MyPage({ onDeleteAccount, googleToken }) {
   const [profile, setProfile] = useState(initialProfile);
@@ -80,20 +93,18 @@ function MyPage({ onDeleteAccount, googleToken }) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [searchActivities, setSearchActivities] = useState([]);
+  const [isLoadingSearchActivities, setIsLoadingSearchActivities] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadProfile = async () => {
-      if (!googleToken) {
-        return;
-      }
+      if (!googleToken) return;
 
       try {
         const user = await getGoogleMe({ token: googleToken });
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         const nextProfile = {
           nickname: user.nickname || "",
@@ -106,29 +117,52 @@ function MyPage({ onDeleteAccount, googleToken }) {
         setEmail(nextProfile.email);
       } catch (error) {
         if (isMounted) {
-          setFeedbackMessage(
-            error instanceof Error
-              ? error.message
-              : "API 요청에 실패하였습니다. 잠시후 시도해주세요.",
-          );
+          setFeedbackMessage(error instanceof Error ? error.message : "프로필 정보를 불러오지 못했습니다.");
         }
       }
     };
 
     loadProfile();
-
     return () => {
       isMounted = false;
     };
   }, [googleToken]);
 
-  const filteredActivities = useMemo(() => {
-    if (activeTab === "all") {
-      return activityHistory;
-    }
+  useEffect(() => {
+    let isMounted = true;
 
-    return activityHistory.filter((activity) => activity.type === activeTab);
-  }, [activeTab]);
+    const loadSearchActivities = async () => {
+      setIsLoadingSearchActivities(true);
+      try {
+        const items = await getSearchHistory();
+        if (!isMounted) return;
+        setSearchActivities(items || []);
+      } catch (error) {
+        if (isMounted) {
+          setFeedbackMessage(error instanceof Error ? error.message : "검색 내역을 불러오지 못했습니다.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingSearchActivities(false);
+        }
+      }
+    };
+
+    loadSearchActivities();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const allActivities = useMemo(() => {
+    return [...searchActivities, ...staticActivities].sort((left, right) => right.time.localeCompare(left.time));
+  }, [searchActivities]);
+
+  const filteredActivities = useMemo(() => {
+    if (activeTab === "all") return allActivities;
+    if (activeTab === "search") return searchActivities;
+    return staticActivities.filter((activity) => activity.type === activeTab);
+  }, [activeTab, allActivities, searchActivities]);
 
   const totalPages = Math.max(1, Math.ceil(filteredActivities.length / pageSize));
 
@@ -138,17 +172,15 @@ function MyPage({ onDeleteAccount, googleToken }) {
   }, [currentPage, filteredActivities]);
 
   const stats = useMemo(() => {
-    return activityHistory.reduce(
-      (accumulator, activity) => {
-        accumulator[activity.type] += 1;
-        return accumulator;
-      },
-      { search: 0, create: 0, download: 0 },
-    );
-  }, []);
+    return {
+      search: searchActivities.length,
+      create: staticActivities.filter((activity) => activity.type === "create").length,
+      download: staticActivities.filter((activity) => activity.type === "download").length,
+    };
+  }, [searchActivities]);
 
   const tabStats = {
-    all: activityHistory.length,
+    all: allActivities.length,
     search: stats.search,
     create: stats.create,
     download: stats.download,
@@ -160,10 +192,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
   };
 
   const handleEditStart = () => {
-    if (isDeleted || isSaving) {
-      return;
-    }
-
+    if (isDeleted || isSaving) return;
     setIsEditingProfile(true);
     setFeedbackMessage("");
   };
@@ -176,9 +205,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
   };
 
   const handleSave = async () => {
-    if (isDeleted || isSaving) {
-      return;
-    }
+    if (isDeleted || isSaving) return;
 
     if (!googleToken) {
       setFeedbackMessage("로그인 정보가 없어 저장할 수 없습니다.");
@@ -213,11 +240,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
       setIsEditingProfile(false);
       setFeedbackMessage("개인정보가 저장되었습니다.");
     } catch (error) {
-      setFeedbackMessage(
-        error instanceof Error
-          ? error.message
-          : "API 요청에 실패하였습니다. 잠시후 시도해주세요.",
-      );
+      setFeedbackMessage(error instanceof Error ? error.message : "프로필 저장에 실패했습니다.");
     } finally {
       setIsSaving(false);
     }
@@ -229,13 +252,41 @@ function MyPage({ onDeleteAccount, googleToken }) {
       return;
     }
 
-    const report = [
+    const resultRows = Array.isArray(activity.results) ? activity.results : [];
+    const reportHeader = [
       `유형: ${activity.type}`,
-      `제목: ${activity.title}`,
-      `설명: ${activity.description}`,
+      `제목: ${activity.type === "search" ? "유사 검색" : activity.title}`,
+      `설명: ${activity.type === "search" ? getSearchDescription(activity) : activity.description}`,
       `시간: ${activity.time}`,
-    ].join("\n");
+      activity.history_id ? `기록 ID: ${activity.history_id}` : null,
+      activity.highest_similarity !== undefined ? `최고 유사도: ${activity.highest_similarity}%` : null,
+      activity.total_found !== undefined ? `결과 수: ${activity.total_found}` : null,
+      "",
+    ]
+      .filter((line) => line !== null)
+      .join("\n");
 
+    const reportBody =
+      resultRows.length > 0
+        ? resultRows
+            .map(
+              (result, index) =>
+                [
+                  `결과 ${index + 1}`,
+                  `- 상표명: ${result.title || ""}`,
+                  `- 출원인: ${result.applicant_name || ""}`,
+                  `- 출원일: ${result.application_date || ""}`,
+                  `- 심사상태: ${result.application_status || ""}`,
+                  `- 이미지 URL: ${result.image_url || ""}`,
+                  `- 유사도 점수: ${result.similarity_score ?? ""}`,
+                  `- 텍스트 점수: ${result.text_score ?? ""}`,
+                  `- 이미지 점수: ${result.image_score ?? ""}`,
+                ].join("\n"),
+            )
+            .join("\n\n")
+        : "상세 결과가 없습니다.";
+
+    const report = `${reportHeader}${reportBody}`;
     const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
     const downloadUrl = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -244,7 +295,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
     anchor.click();
     URL.revokeObjectURL(downloadUrl);
 
-    setFeedbackMessage(`${activity.title} 내역을 다운로드했습니다.`);
+    setFeedbackMessage(`${activity.type === "search" ? "유사 검색" : activity.title} 이력의 다운로드가 완료되었습니다.`);
   };
 
   const handleDeleteConfirm = () => {
@@ -259,7 +310,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
       <section className="mypage-shell">
         <div className="mypage-shell-header">
           <span className="page-kicker">Mypage</span>
-          <h1>개인정보와 최근활동</h1>
+          <h1>개인정보와 최근 활동</h1>
         </div>
 
         <div className="mypage-grid">
@@ -297,7 +348,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                 </div>
                 <div>
                   <span>상태</span>
-                  <strong>{isDeleted ? "탈퇴" : "활성"}</strong>
+                  <strong>{isDeleted ? "탈퇴" : "정상"}</strong>
                 </div>
               </div>
             </div>
@@ -347,7 +398,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
 
           <section className="mypage-panel">
             <div className="panel-title">
-              <span className="section-kicker">최근활동</span>
+              <span className="section-kicker">최근 활동</span>
               <h2>활동 내역</h2>
             </div>
 
@@ -365,34 +416,40 @@ function MyPage({ onDeleteAccount, googleToken }) {
               ))}
             </div>
 
-            <div className="activity-list">
-              {currentItems.map((activity) => (
-                <article key={activity.id} className="activity-item">
-                  <div className={`activity-chip ${activity.type}`}>{activity.type}</div>
-
-                  <div className="activity-content">
-                    <div className="activity-topline">
-                      <h3>{activity.title}</h3>
-                      <span>{activity.time}</span>
+            {activeTab === "search" && isLoadingSearchActivities ? (
+              <div className="activity-empty">검색 내역을 불러오는 중입니다.</div>
+            ) : (
+              <div className="activity-list">
+                {currentItems.map((activity) => (
+                  <article key={activity.id} className="activity-item">
+                    <div className={`activity-chip ${activity.type}`}>
+                      {activityTypeLabels[activity.type] || activity.type}
                     </div>
-                    <p>{activity.description}</p>
-                  </div>
 
-                  <button
-                    type="button"
-                    className="ghost-action"
-                    onClick={() => handleDownload(activity)}
-                    disabled={isDeleted || !activity.downloadable}
-                  >
-                    다운로드
-                  </button>
-                </article>
-              ))}
+                    <div className="activity-content">
+                      <div className="activity-topline">
+                        <h3>{activity.type === "search" ? getSearchTitle(activity) : activity.title}</h3>
+                        <span>{activity.time}</span>
+                      </div>
+                      <p>{activity.type === "search" ? getSearchDescription(activity) : activity.description}</p>
+                    </div>
 
-              {currentItems.length === 0 ? (
-                <div className="activity-empty">선택한 조건의 활동이 없습니다.</div>
-              ) : null}
-            </div>
+                    <button
+                      type="button"
+                      className="ghost-action"
+                      onClick={() => handleDownload(activity)}
+                      disabled={isDeleted || !activity.downloadable}
+                    >
+                      다운로드
+                    </button>
+                  </article>
+                ))}
+
+                {currentItems.length === 0 ? (
+                  <div className="activity-empty">표시할 활동 내역이 없습니다.</div>
+                ) : null}
+              </div>
+            )}
 
             <div className="pagination-bar">
               <button
@@ -425,7 +482,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
         <div className="modal-backdrop" role="presentation">
           <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
             <h2 id="delete-title">회원 탈퇴를 진행할까요?</h2>
-            <p>탈퇴를 확정하면 이 계정은 비활성 상태로 전환됩니다.</p>
+            <p>탈퇴를 선택하면 계정은 비활성 상태로 전환됩니다.</p>
 
             <div className="modal-actions">
               <button
