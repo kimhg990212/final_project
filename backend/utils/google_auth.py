@@ -64,15 +64,14 @@ def require_google_user(admin_only: bool = False) -> Callable:
             )
 
         token_info = verify_google_id_token(credentials.credentials)
-        email = token_info.get("email")
-
-        if not email:
+        google_sub = token_info.get("sub")
+        if not google_sub:
             raise HTTPException(
                 status_code=401,
                 detail="유효하지 않은 Google 토큰입니다.",
             )
 
-        user = db.query(User).filter(User.email == email).first()
+        user = db.query(User).filter(User.google_sub == google_sub).first()
         if not user or user.is_deleted:
             raise HTTPException(
                 status_code=401,

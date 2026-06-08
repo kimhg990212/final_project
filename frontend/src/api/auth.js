@@ -69,3 +69,21 @@ export async function logout() {
 
   return response.json();
 }
+
+export async function updateGoogleMe({ token, email, nickname }) {
+  const response = await fetch(`${BASE_URL}/users/google/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ email, nickname }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "API 요청에 실패하였습니다. 잠시후 시도해주세요.");
+  }
+
+  return response.json();
+}

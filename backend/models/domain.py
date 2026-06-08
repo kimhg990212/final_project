@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
 
@@ -7,23 +7,22 @@ Base = declarative_base()
 
 class TrademarkTrend(Base):
     """
-    FR-10: KIPRIS 상표 출원 데이터 캐시 테이블 (trademark_trends)
+    FR-10: KIPRIS 상표 출원 데이터 캐시 테이블 (kipris_trademarks)
     FAISS 인덱스 ID가 이 테이블의 id를 참조한다.
     """
-    __tablename__ = "trademark_trends"
+    __tablename__ = "kipris_trademarks"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     application_number = Column(String(30), nullable=False, unique=True)
     title = Column(String(255), nullable=True)
     applicant_name = Column(String(255), nullable=True)
-    application_date = Column(String(8), nullable=True)
-    classification_code = Column(String(100), nullable=True)
+    application_date = Column(Date, nullable=True)
+    classification_code = Column(String(255), nullable=True)
     vienna_code = Column(String(255), nullable=True)
     application_status = Column(String(20), nullable=True)
     image_url = Column(Text, nullable=True)
     big_image_url = Column(Text, nullable=True)
-    ocr_text = Column(Text, nullable=True)
-    caption = Column(Text, nullable=True)
+    synced_at = Column(DateTime, nullable=True, server_default=func.current_timestamp())
 
     detection_results = relationship("DetectionResult", back_populates="trademark")
 
@@ -52,7 +51,7 @@ class DetectionResult(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     history_id = Column(Integer, ForeignKey("detection_history.id"), nullable=False)
-    trademark_id = Column(Integer, ForeignKey("trademark_trends.id"), nullable=False)
+    trademark_id = Column(Integer, ForeignKey("kipris_trademarks.id"), nullable=False)
 
     similarity_score = Column(Float, nullable=False)
     image_score = Column(Float, nullable=True)

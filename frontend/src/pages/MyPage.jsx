@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { getGoogleMe } from "../api/auth";
+
+import { getGoogleMe, updateGoogleMe } from "../api/auth";
 import "../css/mypage.css";
 
 const initialProfile = {
@@ -13,7 +14,7 @@ const activityHistory = [
     id: 1,
     type: "search",
     title: "상표 검색",
-    description: "Aurora 키워드로 유사 상표 24건을 확인했습니다.",
+    description: "최근 검색한 상표 24건을 확인했습니다.",
     time: "2026.06.02 09:40",
     downloadable: true,
   },
@@ -37,15 +38,15 @@ const activityHistory = [
     id: 4,
     type: "search",
     title: "상표 검색",
-    description: "Nova 브랜드명으로 유사 사례를 다시 확인했습니다.",
+    description: "브랜드명으로 유사 상표를 다시 확인했습니다.",
     time: "2026.06.01 18:05",
     downloadable: true,
   },
   {
     id: 5,
     type: "create",
-    title: "재생성 요청",
-    description: "색상 조합을 바꿔 새로운 블루 계열 시안을 생성했습니다.",
+    title: "아이디어 생성",
+    description: "색상 조합과 레이아웃 시안을 새로 만들었습니다.",
     time: "2026.06.01 18:28",
     downloadable: true,
   },
@@ -55,22 +56,6 @@ const activityHistory = [
     title: "PNG 저장",
     description: "선택한 결과물을 PNG 파일로 저장했습니다.",
     time: "2026.06.01 19:02",
-    downloadable: true,
-  },
-  {
-    id: 7,
-    type: "search",
-    title: "상표 검색",
-    description: "문구 조합 기준으로 추가 검색을 수행했습니다.",
-    time: "2026.05.31 11:16",
-    downloadable: true,
-  },
-  {
-    id: 8,
-    type: "create",
-    title: "로고 생성",
-    description: "텍스트 기반 로고 시안을 다시 생성했습니다.",
-    time: "2026.05.31 11:42",
     downloadable: true,
   },
 ];
@@ -94,6 +79,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -174,7 +160,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
   };
 
   const handleEditStart = () => {
-    if (isDeleted) {
+    if (isDeleted || isSaving) {
       return;
     }
 
@@ -189,20 +175,52 @@ function MyPage({ onDeleteAccount, googleToken }) {
     setFeedbackMessage("수정을 취소했습니다.");
   };
 
-  const handleSave = () => {
-    if (isDeleted) {
-      setFeedbackMessage("탈퇴한 계정은 수정할 수 없습니다.");
+  const handleSave = async () => {
+    if (isDeleted || isSaving) {
       return;
     }
 
-    setProfile((current) => ({
-      ...current,
-      nickname: nickname.trim() || current.nickname,
-      email: email.trim() || current.email,
-    }));
+    if (!googleToken) {
+      setFeedbackMessage("로그인 정보가 없어 저장할 수 없습니다.");
+      return;
+    }
 
-    setIsEditingProfile(false);
-    setFeedbackMessage("개인정보가 저장되었습니다.");
+    const nextNickname = nickname.trim();
+    const nextEmail = email.trim();
+
+    if (!nextNickname || !nextEmail) {
+      setFeedbackMessage("닉네임과 이메일을 모두 입력해주세요.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await updateGoogleMe({
+        token: googleToken,
+        email: nextEmail,
+        nickname: nextNickname,
+      });
+
+      const nextProfile = {
+        nickname: result.nickname || "",
+        email: result.email || "",
+        joinedAt: profile.joinedAt,
+      };
+
+      setProfile(nextProfile);
+      setNickname(nextProfile.nickname);
+      setEmail(nextProfile.email);
+      setIsEditingProfile(false);
+      setFeedbackMessage("개인정보가 저장되었습니다.");
+    } catch (error) {
+      setFeedbackMessage(
+        error instanceof Error
+          ? error.message
+          : "API 요청에 실패하였습니다. 잠시후 시도해주세요.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDownload = (activity) => {
@@ -212,7 +230,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
     }
 
     const report = [
-      `활동 유형: ${activity.type}`,
+      `유형: ${activity.type}`,
       `제목: ${activity.title}`,
       `설명: ${activity.description}`,
       `시간: ${activity.time}`,
@@ -258,7 +276,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                   type="text"
                   value={nickname}
                   onChange={(event) => setNickname(event.target.value)}
-                  disabled={isDeleted || !isEditingProfile}
+                  disabled={isDeleted || !isEditingProfile || isSaving}
                 />
               </label>
 
@@ -268,7 +286,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  disabled={isDeleted || !isEditingProfile}
+                  disabled={isDeleted || !isEditingProfile || isSaving}
                 />
               </label>
 
@@ -290,7 +308,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                   type="button"
                   className="primary-action"
                   onClick={handleEditStart}
-                  disabled={isDeleted}
+                  disabled={isDeleted || isSaving}
                 >
                   수정
                 </button>
@@ -300,7 +318,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                     type="button"
                     className="secondary-action"
                     onClick={handleEditCancel}
-                    disabled={isDeleted}
+                    disabled={isDeleted || isSaving}
                   >
                     수정 취소
                   </button>
@@ -308,7 +326,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                     type="button"
                     className="primary-action"
                     onClick={handleSave}
-                    disabled={isDeleted}
+                    disabled={isDeleted || isSaving}
                   >
                     개인정보 저장
                   </button>
@@ -318,7 +336,7 @@ function MyPage({ onDeleteAccount, googleToken }) {
                 type="button"
                 className="danger-action"
                 onClick={() => setIsDeleteConfirmOpen(true)}
-                disabled={isDeleted}
+                disabled={isDeleted || isSaving}
               >
                 회원 탈퇴
               </button>
