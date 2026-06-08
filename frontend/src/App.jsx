@@ -30,7 +30,7 @@ const userIdStorageKey = "logoGuard:userId";
 const userNicknameStorageKey = "logoGuard:userNickname";
 const userRoleStorageKey = "logoGuard:userRole";
 
-function DetectRouteGuard({ isLoggedIn }) {
+function DetectRouteGuard({ isLoggedIn, googleToken }) {
   useEffect(() => {
     if (!isLoggedIn) {
       alert("로그인이 필요한 서비스 입니다.");
@@ -41,7 +41,7 @@ function DetectRouteGuard({ isLoggedIn }) {
     return <Navigate to={URL.HOME} replace />;
   }
 
-  return <DetectPage />;
+  return <DetectPage googleToken={googleToken} />;
 }
 
 function RequireLogin({ isLoggedIn, children }) {
@@ -237,7 +237,12 @@ function App() {
           <Route path={URL.TREND} element={<TrendPage />} />
           <Route
             path="/detect"
-            element={<DetectRouteGuard isLoggedIn={isLoggedIn} />}
+            element={
+              <DetectRouteGuard
+                isLoggedIn={isLoggedIn}
+                googleToken={googleToken}
+              />
+            }
           />
           <Route
             path={URL.GENERATE}

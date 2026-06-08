@@ -1,8 +1,7 @@
 const BASE_URL = "http://localhost:5000";
 
-export async function detectPlagiarism({ textQuery, imageFile }) {
+export async function detectPlagiarism({ textQuery, imageFile, token }) {
   const formData = new FormData();
-
   if (textQuery) {
     formData.append("text_query", textQuery);
   }
@@ -11,8 +10,14 @@ export async function detectPlagiarism({ textQuery, imageFile }) {
     formData.append("image_file", imageFile);
   }
 
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${BASE_URL}/api/v1/detect`, {
     method: "POST",
+    headers,
     body: formData,
   });
 

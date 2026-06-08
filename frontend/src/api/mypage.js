@@ -1,8 +1,14 @@
 const BASE_URL = "http://localhost:5000";
 
-export async function getSearchHistory() {
+export async function getSearchHistory({ token }) {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${BASE_URL}/api/v1/detect/history`, {
     method: "GET",
+    headers,
   });
 
   if (!response.ok) {
