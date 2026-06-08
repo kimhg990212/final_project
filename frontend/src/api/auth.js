@@ -11,7 +11,9 @@ export async function googleLogin({ token }) {
 
   if (!response.ok) {
     const err = await response.json().catch(() => null);
-    throw new Error(err?.detail || "API 요청에 실패하였습니다. 잠시후 시도해주세요.");
+    throw new Error(
+      err?.detail || "API 요청에 실패하였습니다. 잠시후 시도해주세요.",
+    );
   }
 
   return response.json();
@@ -27,7 +29,42 @@ export async function getGoogleMe({ token }) {
 
   if (!response.ok) {
     const err = await response.json().catch(() => null);
-    throw new Error(err?.detail || "API 요청에 실패하였습니다. 잠시후 시도해주세요.");
+    throw new Error(
+      err?.detail || "API 요청에 실패하였습니다. 잠시후 시도해주세요.",
+    );
+  }
+
+  return response.json();
+}
+
+export async function login({ email, password }) {
+  const response = await fetch(`${BASE_URL}/users/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "로그인에 실패했습니다.");
+  }
+
+  return response.json();
+}
+
+export async function logout() {
+  const response = await fetch(`${BASE_URL}/users/logout`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "로그아웃에 실패했습니다.");
   }
 
   return response.json();

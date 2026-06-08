@@ -1,1 +1,4 @@
 .env
+# Generated Images
+!uploads/images/.gitkeep
+uploads/images/*.png

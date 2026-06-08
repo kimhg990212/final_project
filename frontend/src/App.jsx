@@ -14,6 +14,7 @@ import TrendPage from "./pages/TrendPage";
 import DetectPage from "./pages/DetectPage";
 import GeneratePage from "./pages/GeneratePage";
 import MyPage from "./pages/MyPage";
+import AdminPage from "./pages/AdminPage";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import { googleLogin } from "./api/auth";
@@ -79,7 +80,9 @@ function App() {
       const decoded = jwtDecode(credentialResponse.credential);
       console.log("Decoded Google credential:", decoded);
 
-      const result = await googleLogin({ token: credentialResponse.credential });
+      const result = await googleLogin({
+        token: credentialResponse.credential,
+      });
       console.log("Google login API response:", result);
       setGoogleToken(credentialResponse.credential);
       setIsLoggedIn(true);
@@ -99,18 +102,19 @@ function App() {
       <Routes>
         <Route
           element={
-              <SiteLayout
-                isLoggedIn={isLoggedIn}
-                onGoogleLogin={handleGoogleLogin}
-                onLogout={handleLogout}
-              />
+            <SiteLayout
+              isLoggedIn={isLoggedIn}
+              onGoogleLogin={handleGoogleLogin}
+              onLogout={handleLogout}
+            />
           }
         >
           <Route path={URL.HOME} element={<Home />} />
           <Route path={URL.TREND} element={<TrendPage />} />
           <Route path="/detect" element={<DetectPage />} />
           <Route path={URL.GENERATE} element={<GeneratePage />} />
-            <Route
+          <Route path="/admin" element={<AdminPage />} />
+          <Route
             path={URL.MYPAGE}
             element={
               isLoggedIn ? (
