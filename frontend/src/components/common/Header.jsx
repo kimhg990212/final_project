@@ -1,16 +1,24 @@
 import { NavLink } from "react-router-dom";
 
 import { URL } from "../../constants";
+import { isAdminRole } from "../../utils/auth";
 import "../../css/common/header.css";
 
 import { GoogleLogin } from "@react-oauth/google";
 
-function Header({ isLoggedIn, onGoogleLogin, onLogout, googleClientId }) {
+function Header({
+  isLoggedIn,
+  userRole,
+  onGoogleLogin,
+  onLogout,
+  googleClientId,
+}) {
   const navItems = [
     { to: URL.TREND, label: "트렌드" },
-    { to: "/detect", label: "유사 검색" },
+    { to: "/detect", label: "상표 검색" },
     { to: URL.GENERATE, label: "로고 생성" },
     ...(isLoggedIn ? [{ to: URL.MYPAGE, label: "마이페이지" }] : []),
+    ...(isAdminRole(userRole) ? [{ to: "/admin", label: "관리자" }] : []),
   ];
 
   return (
@@ -61,12 +69,12 @@ function Header({ isLoggedIn, onGoogleLogin, onLogout, googleClientId }) {
                 disabled
                 title="VITE_GOOGLE_CLIENT_ID를 설정해야 Google 로그인이 활성화됩니다"
               >
-                구글 로그인 불가
+                Google 로그인 불가
               </button>
             )
           ) : (
             <>
-              <span className="header-user-chip">구글 로그인됨</span>
+              <span className="header-user-chip">Google 로그인됨</span>
               <button
                 type="button"
                 className="header-auth-link secondary"

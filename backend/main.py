@@ -5,6 +5,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth
@@ -31,6 +32,11 @@ app = FastAPI(
     description="CLIP 임베딩 및 FAISS 백터 스토리지를 활용한 실시간 도용 매칭 백엔드 엔진",
     version="1.0.0",
     lifespan=lifespan
+)
+app.mount(
+    "/uploads/images",
+    StaticFiles(directory="uploads/images"),
+    name="uploads_images"
 )
 
 # React 프론트엔드 연동을 위한 CORS 정책 추가
