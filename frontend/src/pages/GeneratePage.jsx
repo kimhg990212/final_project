@@ -152,11 +152,17 @@ function GeneratePage({ userId }) {
 
           <div className="result-image-box">
             {result?.image_url ? (
-              <img
-                src={getImageSrc(result.image_url)}
-                alt="생성된 로고"
-                className="generated-logo-img"
-              />
+              <div className="image-wrapper">
+                <img
+                  src={getImageSrc(result.image_url)}
+                  alt="생성된 로고"
+                  className="generated-logo-img"
+                  onContextMenu={(e) => e.preventDefault()}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+
+                <div className="watermark">PREVIEW</div>
+              </div>
             ) : loading ? (
               <p>이미지를 생성하는 중입니다...</p>
             ) : (

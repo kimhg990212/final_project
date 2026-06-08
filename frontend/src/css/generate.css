@@ -273,3 +273,32 @@
   max-height: 100%;
   object-fit: contain;
 }
+.image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.generated-logo-img {
+  display: block;
+  max-width: 100%;
+}
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  font-size: 48px;
+  font-weight: 800;
+
+  color: rgba(255, 255, 255, 0.55);
+
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.generated-logo-img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
