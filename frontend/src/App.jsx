@@ -26,6 +26,8 @@ import "./css/App.css";
 
 const authStorageKey = "logoGuard:isLoggedIn";
 const googleTokenStorageKey = "logoGuard:googleToken";
+const userIdStorageKey = "logoGuard:userId";
+const userNicknameStorageKey = "logoGuard:userNickname";
 const userRoleStorageKey = "logoGuard:userRole";
 
 function DetectRouteGuard({ isLoggedIn }) {
@@ -42,6 +44,20 @@ function DetectRouteGuard({ isLoggedIn }) {
   return <DetectPage />;
 }
 
+function RequireLogin({ isLoggedIn, children }) {
+  useEffect(() => {
+    if (!isLoggedIn) {
+      alert("로그인이 필요한 서비스 입니다.");
+    }
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) {
+    return <Navigate to={URL.HOME} replace />;
+  }
+
+  return children;
+}
+
 function AdminRouteGuard({ isLoggedIn, isAdmin }) {
   useEffect(() => {
     if (!isLoggedIn) {
@@ -54,18 +70,29 @@ function AdminRouteGuard({ isLoggedIn, isAdmin }) {
     }
   }, [isLoggedIn, isAdmin]);
 
-  if (!isLoggedIn || !isAdmin) {
+  if (!isLoggedIn) {
+    return <Navigate to={URL.HOME} replace />;
+  }
+
+  if (!isAdmin) {
     return <Navigate to={URL.HOME} replace />;
   }
 
   return <AdminPage />;
 }
 
-function SiteLayout({ isLoggedIn, userRole, onGoogleLogin, onLogout }) {
+function SiteLayout({
+  isLoggedIn,
+  userNickname,
+  userRole,
+  onGoogleLogin,
+  onLogout,
+}) {
   return (
     <div className="app-shell">
       <Header
         isLoggedIn={isLoggedIn}
+        userNickname={userNickname}
         userRole={userRole}
         onGoogleLogin={onGoogleLogin}
         onLogout={onLogout}
@@ -85,6 +112,13 @@ function App() {
   });
   const [googleToken, setGoogleToken] = useState(() => {
     return window.localStorage.getItem(googleTokenStorageKey) || "";
+  });
+  const [userId, setUserId] = useState(() => {
+    const storedUserId = window.localStorage.getItem(userIdStorageKey);
+    return storedUserId ? Number(storedUserId) : null;
+  });
+  const [userNickname, setUserNickname] = useState(() => {
+    return window.localStorage.getItem(userNicknameStorageKey) || "";
   });
   const [userRole, setUserRole] = useState(() => {
     return window.localStorage.getItem(userRoleStorageKey) || "";
@@ -109,6 +143,24 @@ function App() {
   }, [googleToken]);
 
   useEffect(() => {
+    if (userId) {
+      window.localStorage.setItem(userIdStorageKey, String(userId));
+      return;
+    }
+
+    window.localStorage.removeItem(userIdStorageKey);
+  }, [userId]);
+
+  useEffect(() => {
+    if (userNickname) {
+      window.localStorage.setItem(userNicknameStorageKey, userNickname);
+      return;
+    }
+
+    window.localStorage.removeItem(userNicknameStorageKey);
+  }, [userNickname]);
+
+  useEffect(() => {
     if (userRole) {
       window.localStorage.setItem(userRoleStorageKey, userRole);
       return;
@@ -118,8 +170,8 @@ function App() {
   }, [userRole]);
 
   const handleGoogleLogin = async (credentialResponse) => {
-    console.log("Google credential response:", credentialResponse);
-    console.log("Google credential token:", credentialResponse?.credential);
+    // console.log("Google credential response:", credentialResponse);
+    // console.log("Google credential token:", credentialResponse?.credential);
     if (!credentialResponse?.credential) {
       alert("API 요청에 실패하였습니다. 잠시후 시도해주세요.");
       return;
@@ -127,13 +179,16 @@ function App() {
 
     try {
       const decoded = jwtDecode(credentialResponse.credential);
-      console.log("Decoded Google credential:", decoded);
+      // console.log("Decoded Google credential:", decoded);
 
       const result = await googleLogin({
         token: credentialResponse.credential,
       });
+
       console.log("Google login API response:", result);
       setGoogleToken(credentialResponse.credential);
+      setUserId(result?.user_id ?? null);
+      setUserNickname(result?.nickname || "");
       setUserRole(result?.role || "");
       setIsLoggedIn(true);
     } catch (error) {
@@ -141,10 +196,11 @@ function App() {
       alert("API 요청에 실패하였습니다. 잠시후 시도해주세요.");
     }
   };
-
   const handleLogout = () => {
     setIsLoggedIn(false);
     setGoogleToken("");
+    setUserId(null);
+    setUserNickname("");
     setUserRole("");
   };
 
@@ -158,6 +214,7 @@ function App() {
           element={
             <SiteLayout
               isLoggedIn={isLoggedIn}
+              userNickname={userNickname}
               userRole={userRole}
               onGoogleLogin={handleGoogleLogin}
               onLogout={handleLogout}
@@ -170,11 +227,26 @@ function App() {
             path="/detect"
             element={<DetectRouteGuard isLoggedIn={isLoggedIn} />}
           />
-          <Route path={URL.GENERATE} element={<GeneratePage />} />
+          <Route
+            path={URL.GENERATE}
+            element={
+              <RequireLogin isLoggedIn={isLoggedIn}>
+                <GeneratePage userId={userId} />
+              </RequireLogin>
+            }
+          />
           <Route
             path="/admin"
             element={
-              <AdminRouteGuard isLoggedIn={isLoggedIn} isAdmin={isAdmin} />
+              isLoggedIn ? (
+                isAdmin ? (
+                  <AdminPage />
+                ) : (
+                  <Navigate to={URL.HOME} replace />
+                )
+              ) : (
+                <Navigate to={URL.HOME} replace />
+              )
             }
           />
           <Route

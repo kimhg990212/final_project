@@ -1,10 +1,11 @@
 import { useState } from "react";
-import "../css/generate.css";
+
 import { generateTextLogo } from "../api/text_logo";
+import "../css/generate.css";
 
 const BASE_URL = "http://localhost:5000";
 
-function GeneratePage() {
+function GeneratePage({ userId }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [mode, setMode] = useState("text");
@@ -17,15 +18,8 @@ function GeneratePage() {
       return;
     }
 
-    const savedUser = JSON.parse(localStorage.getItem("user"));
-
-    if (!savedUser) {
-      alert("로그인 후 이용해주세요.");
-      return;
-    }
-
     if (mode === "file") {
-      alert("파일 기반 생성은 아직 연결 전입니다.");
+      alert("파일 기반 생성은 아직 연결 준비 중입니다.");
       return;
     }
 
@@ -34,7 +28,7 @@ function GeneratePage() {
 
       const data = await generateTextLogo({
         text,
-        userId: savedUser.id,
+        userId,
       });
 
       setResult({
@@ -105,7 +99,7 @@ function GeneratePage() {
               <label>로고 설명</label>
 
               <textarea
-                placeholder="예: 고급스러운 밀크티 카페 로고, 브라운과 골드 컬러, 심플한 엠블럼 느낌"
+                placeholder="예: 고급스러운 분위기의 카페 로고, 브라운과 골드 컬러, 미니멀한 스타일"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
@@ -127,7 +121,7 @@ function GeneratePage() {
               <label>추가 설명</label>
 
               <textarea
-                placeholder="예: 업로드한 이미지의 분위기를 참고해서 더 심플하게 생성"
+                placeholder="예: 업로드한 이미지를 참고해서 더 세련되게 생성"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
@@ -139,8 +133,8 @@ function GeneratePage() {
 
             <p>
               {mode === "text"
-                ? "업종, 색상, 분위기, 원하는 심볼을 함께 입력하면 결과가 좋아집니다."
-                : "참고 이미지와 함께 원하는 스타일을 설명하면 결과 품질이 향상됩니다."}
+                ? "업종, 색상, 분위기, 스타일을 함께 입력하면 결과가 좋아집니다."
+                : "참고 이미지와 함께 원하는 스타일을 설명하면 결과가 더 정확합니다."}
             </p>
           </div>
 
@@ -149,7 +143,7 @@ function GeneratePage() {
             onClick={handleGenerate}
             disabled={loading}
           >
-            {loading ? "생성 중..." : "생성하기"}
+            {loading ? "생성 중.." : "생성하기"}
           </button>
         </div>
 
@@ -179,7 +173,7 @@ function GeneratePage() {
 
               {mode === "file" && file && (
                 <p>
-                  <strong>업로드 파일</strong>
+                  <strong>참고 파일</strong>
                   {file.name}
                 </p>
               )}

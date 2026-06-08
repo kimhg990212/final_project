@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
+
+
 from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth
 
 # 로깅 설정

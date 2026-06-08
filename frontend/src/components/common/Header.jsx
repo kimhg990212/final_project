@@ -1,18 +1,19 @@
 import { NavLink } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 
 import { URL } from "../../constants";
 import { isAdminRole } from "../../utils/auth";
 import "../../css/common/header.css";
 
-import { GoogleLogin } from "@react-oauth/google";
-
 function Header({
   isLoggedIn,
+  userNickname,
   userRole,
   onGoogleLogin,
   onLogout,
   googleClientId,
 }) {
+  console.log(userNickname);
   const navItems = [
     { to: URL.TREND, label: "트렌드" },
     { to: "/detect", label: "상표 검색" },
@@ -47,14 +48,14 @@ function Header({
             googleClientId ? (
               <GoogleLogin
                 onSuccess={(credentialResponse) => {
-                  console.log(
-                    "Google credential response:",
-                    credentialResponse,
-                  );
-                  console.log(
-                    "Google credential token:",
-                    credentialResponse?.credential,
-                  );
+                  // console.log(
+                  //   "Google credential response:",
+                  //   credentialResponse,
+                  // );
+                  // console.log(
+                  //   "Google credential token:",
+                  //   credentialResponse?.credential,
+                  // );
                   onGoogleLogin?.(credentialResponse);
                 }}
                 onError={() => console.log("Google Login Failed")}
@@ -74,7 +75,9 @@ function Header({
             )
           ) : (
             <>
-              <span className="header-user-chip">Google 로그인됨</span>
+              <span className="header-user-chip">
+                {userNickname ? `${userNickname} 님` : ""}
+              </span>
               <button
                 type="button"
                 className="header-auth-link secondary"

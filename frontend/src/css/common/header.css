@@ -137,7 +137,6 @@
     font-size: 14px;
   }
 }
-/* 검토 필요 */
 
 .login-modal {
   position: fixed;
@@ -223,6 +222,7 @@
 .login-close-btn:hover {
   background: #eceff5 !important;
 }
+
 .login-divider {
   position: relative;
   text-align: center;
