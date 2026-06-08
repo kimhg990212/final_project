@@ -167,7 +167,7 @@ async def analyze_plagiarism(
 
             if text_query:
                 user_words = set(text_query.split())
-                db_text = f"{meta.title or ''} {meta.ocr_text or ''}"
+                db_text = f"{meta.title or ''}"
                 db_words = set(db_text.split())
                 matched_keywords = [w for w in user_words if w in db_words and len(w) > 1]
         else:
