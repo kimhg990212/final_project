@@ -1,11 +1,14 @@
-from fastapi import APIRouter
-from fastapi import UploadFile
-from fastapi import File
-from fastapi import Form
+from fastapi import APIRouter, Depends, File, Form, status, UploadFile
+from sqlalchemy.orm import Session
 
-from controllers.generate_controller import (
-    generate_logo_controller
+from controllers.download_controller import handle_download_history
+from models.user import User
+from schemas.download_schema import (
+    DownloadHistoryCreateRequest,
+    DownloadHistoryResponse,
 )
+from utils.database import get_db
+from utils.google_auth import require_google_user
 
 router = APIRouter(
     prefix="/generate",
@@ -22,8 +25,27 @@ async def generate_logo(
 
 ):
 
+    from controllers.generate_controller import generate_logo_controller
+
     return await generate_logo_controller(
         image=image,
         prompt=prompt,
         category=category
+    )
+
+
+@router.post(
+    "/download",
+    response_model=DownloadHistoryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def save_download_history_endpoint(
+    payload: DownloadHistoryCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_google_user()),
+):
+    return handle_download_history(
+        db=db,
+        current_user_id=current_user.id,
+        payload=payload,
     )

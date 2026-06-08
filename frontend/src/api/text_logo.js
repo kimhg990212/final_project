@@ -19,3 +19,32 @@ export async function generateTextLogo({ text, userId }) {
 
   return response.json();
 }
+
+export async function saveDownloadHistory({
+  token,
+  userId,
+  resultId,
+  prompt,
+  imagePath,
+}) {
+  const response = await fetch(`${BASE_URL}/generate/download`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      result_id: resultId,
+      prompt,
+      image_path: imagePath,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "다운로드 기록 저장에 실패했습니다.");
+  }
+
+  return response.json();
+}

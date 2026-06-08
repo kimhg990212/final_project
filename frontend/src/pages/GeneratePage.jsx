@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-import { generateTextLogo } from "../api/text_logo";
+import { generateTextLogo, saveDownloadHistory } from "../api/text_logo";
 import "../css/generate.css";
 
 const BASE_URL = "http://localhost:5000";
 
-function GeneratePage({ userId }) {
+function GeneratePage({ userId, googleToken }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [mode, setMode] = useState("text");
@@ -32,6 +32,7 @@ function GeneratePage({ userId }) {
       });
 
       setResult({
+        resultId: data.id ?? null,
         prompt: text,
         image_url: data.image_url || data.image_path,
       });
@@ -65,6 +66,14 @@ function GeneratePage({ userId }) {
       }
 
       const blob = await response.blob();
+      await saveDownloadHistory({
+        token: googleToken,
+        userId,
+        resultId: result.resultId ?? null,
+        prompt: result.prompt || text,
+        imagePath: result.image_url,
+      });
+
       const downloadUrl = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = downloadUrl;

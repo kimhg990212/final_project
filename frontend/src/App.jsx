@@ -248,7 +248,7 @@ function App() {
             path={URL.GENERATE}
             element={
               <RequireLogin isLoggedIn={isLoggedIn}>
-                <GeneratePage userId={userId} />
+                <GeneratePage userId={userId} googleToken={googleToken} />
               </RequireLogin>
             }
           />
