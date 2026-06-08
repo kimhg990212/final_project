@@ -190,6 +190,16 @@ function App() {
       setUserId(result?.user_id ?? null);
       setUserNickname(result?.nickname || "");
       setUserRole(result?.role || "");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: result?.user_id ?? null,
+          email: result?.email || decoded?.email || "",
+          nickname: result?.nickname || decoded?.name || "",
+          role: result?.role || "",
+        }),
+      );
+
       setIsLoggedIn(true);
     } catch (error) {
       console.error("Google login API failed:", error);
@@ -202,6 +212,8 @@ function App() {
     setUserId(null);
     setUserNickname("");
     setUserRole("");
+
+    localStorage.removeItem("user");
   };
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;

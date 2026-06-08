@@ -82,3 +82,107 @@
   background: #ccc;
   cursor: not-allowed;
 }
+
+.admin-trademark-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.admin-trademark-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.admin-trademark-image {
+  height: 150px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-trademark-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.admin-trademark-info {
+  padding: 12px;
+}
+
+.admin-trademark-info strong {
+  display: block;
+  font-size: 14px;
+}
+
+.admin-trademark-info p {
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+.admin-trademark-info span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.admin-trademark-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-trademark-info {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.admin-delete-btn {
+  margin: 0 14px 14px;
+  width: calc(100% - 28px);
+  padding: 10px 0;
+
+  border: none;
+  border-radius: 10px;
+  background: #ef4444 !important;
+  color: white;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.admin-delete-btn:hover {
+  background: #ee7171 !important;
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.25);
+}
+
+.admin-delete-btn:active {
+  transform: scale(0.98);
+}
+.admin-delete-btn {
+  width: 80%;
+  margin: 14px auto;
+  display: block;
+}
+.admin-delete-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(239, 68, 68, 0.2);
+}
+.admin-section-header p {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
