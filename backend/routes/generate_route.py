@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, File, Form, status, UploadFile
 from sqlalchemy.orm import Session
 
+from controllers.generate_controller import generate_logo_controller
+
 from controllers.download_controller import handle_download_history
 from models.user import User
 from schemas.download_schema import (
@@ -14,25 +16,22 @@ router = APIRouter(
     prefix="/generate",
     tags=["Generate"]
 )
-
 @router.post("/logo")
-
 async def generate_logo(
-
-    image: UploadFile = File(...),
-    prompt: str = Form(...),
-    category: str = Form(...)
-
+    trademark_ids: str = Form(...),
+    brand_description: str = Form(...),
+    style: str = Form(default=""),
+    mood: str = Form(default=""),
+    color: str = Form(default=""),
 ):
-
-    from controllers.generate_controller import generate_logo_controller
-
+    id_list = [int(id.strip()) for id in trademark_ids.split(",")]
     return await generate_logo_controller(
-        image=image,
-        prompt=prompt,
-        category=category
+        trademark_ids=id_list,
+        brand_description=brand_description,
+        style=style,
+        mood=mood,
+        color=color,
     )
-
 
 @router.post(
     "/download",

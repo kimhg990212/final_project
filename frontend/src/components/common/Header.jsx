@@ -18,6 +18,7 @@ function Header({
     { to: URL.TREND, label: "트렌드" },
     { to: "/detect", label: "상표 검색" },
     { to: URL.GENERATE, label: "로고 생성" },
+    ...(isLoggedIn ? [{ to: URL.RECOMMEND, label: "로고 추천" }] : []),
     ...(isLoggedIn ? [{ to: URL.MYPAGE, label: "마이페이지" }] : []),
     ...(isAdminRole(userRole) ? [{ to: "/admin", label: "관리자" }] : []),
   ];

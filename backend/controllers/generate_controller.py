@@ -1,54 +1,50 @@
-from services.embedding_service import (
-    create_text_embedding,
-    create_image_embedding,
-    merge_embeddings
-)
-
-from services.vector_search_service import (
-    search_dissimilar_vectors
-)
-
-from services.image_generation_service import (
-    generate_logo_images
-)
+from utils.response_utils import success_response, error_response
+from services.image_generation_service import generate_logo_images
+from utils.database import SessionLocal
+from sqlalchemy import text
 
 async def generate_logo_controller(
-    image,
-    prompt,
-    category
+    trademark_ids: list,
+    brand_description: str,
+    style: str = "",
+    mood: str = "",
+    color: str = "",
 ):
+    try:
+        with SessionLocal() as db:
+            result = db.execute(
+                text("""
+                    SELECT id, title, classification_code, image_url, big_image_url
+                    FROM kipris_trademarks
+                    WHERE id IN :ids
+                """),
+                {"ids": tuple(trademark_ids)}
+            )
+            rows = result.mappings().all()
 
-    # 이미지 벡터 생성
-    image_embedding = create_image_embedding(
-        image.file
-    )
+        if not rows:
+            return error_response("상표 정보를 찾을 수 없습니다.")
 
-    # 텍스트 벡터 생성
-    text_embedding = create_text_embedding(
-        prompt
-    )
+        titles = [row["title"] for row in rows if row["title"]]
+        image_urls = [
+            row["image_url"] or row["big_image_url"]
+            for row in rows
+            if row["image_url"] or row["big_image_url"]
+        ]
 
-    # 벡터 결합
-    merged_embedding = merge_embeddings(
-        image_embedding,
-        text_embedding
-    )
+        generated_images = await generate_logo_images(
+            brand_description=brand_description,
+            top3_titles=titles,
+            top3_image_urls=image_urls,
+            style=style,
+            mood=mood,
+            color=color,
+        )
 
-    # 비유사 TOP5 검색
-    top5_results = search_dissimilar_vectors(
-        merged_embedding,
-        top_k=5
-    )
+        return success_response(
+            message="로고 생성 완료",
+            data={"generated_images": generated_images}
+        )
 
-    # 로고 생성
-    generated_images = generate_logo_images(
-        prompt,
-        top5_results
-    )
-
-    return {
-        "success": True,
-        "message": "로고 생성 완료",
-        "top5": top5_results,
-        "generated_images": generated_images
-    }
+    except Exception as e:
+        return error_response(str(e))

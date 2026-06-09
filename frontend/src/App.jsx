@@ -20,6 +20,7 @@ import Footer from "./components/common/Footer";
 import { getGoogleMe, googleLogin } from "./api/auth";
 import { URL } from "./constants";
 import { isAdminRole } from "./utils/auth";
+import RecommendPage from "./pages/RecommendPage";
 
 import "./css/index.css";
 import "./css/App.css";
@@ -325,6 +326,15 @@ function App() {
               </RequireLogin>
             }
           />
+
+          <Route
+            path={URL.RECOMMEND}
+            element={
+              <RequireLogin isLoggedIn={isLoggedIn}>
+                <RecommendPage userId={userId} />
+              </RequireLogin>
+            }
+          />
           <Route
             path="/admin"
             element={
@@ -339,19 +349,19 @@ function App() {
               )
             }
           />
-        <Route
-          path={URL.MYPAGE}
-          element={
-            isLoggedIn ? (
-              <MyPage
-                onDeleteAccount={handleLogout}
-                googleToken={googleToken}
-                onProfileUpdate={handleProfileUpdate}
-              />
-            ) : (
-              <Navigate to={URL.HOME} replace />
-            )
-          }
+          <Route
+            path={URL.MYPAGE}
+            element={
+              isLoggedIn ? (
+                <MyPage
+                  onDeleteAccount={handleLogout}
+                  googleToken={googleToken}
+                  onProfileUpdate={handleProfileUpdate}
+                />
+              ) : (
+                <Navigate to={URL.HOME} replace />
+              )
+            }
           />
         </Route>
 

@@ -1,5 +1,7 @@
 import uvicorn, os
 import logging
+import pathlib
+
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
@@ -10,7 +12,8 @@ from contextlib import asynccontextmanager
 
 
 
-from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth, upload_route, generate_route, mypage_route
+from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth, upload_route, generate_route, mypage_route, search_route
+
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -41,6 +44,11 @@ app.mount(
     name="uploads_images"
 )
 
+static_dir = pathlib.Path(__file__).parent / "static"
+static_dir.mkdir(exist_ok=True)
+(static_dir / "generated").mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
 # React 프론트엔드 연동을 위한 CORS 정책 추가
 app.add_middleware(
     CORSMiddleware,
@@ -61,6 +69,8 @@ app.include_router(admin_route.router)
 app.include_router(generate_route.router)
 app.include_router(mypage_route.router)
 
+
+app.include_router(search_route.router)
 # FR-08기능 추가 라우터
 # from routes.generate_route import (
 #     router as generate_router

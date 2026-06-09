@@ -13,3 +13,5 @@ docker/database/mariadb_data/
 backend/venv/
 backend/index/
 uploads/
+
+static

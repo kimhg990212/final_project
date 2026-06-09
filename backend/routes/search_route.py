@@ -1,34 +1,26 @@
-from fastapi import APIRouter
-from fastapi import UploadFile
-from fastapi import File
-from fastapi import Form
-
+from fastapi import APIRouter, Form
 from controllers.search_controller import (
+    get_categories_controller,
     search_logo_controller
 )
 
 router = APIRouter(
-
     prefix="/search",
     tags=["Search"]
 )
 
+# 카테고리 목록 반환 (드롭다운용)
+@router.get("/categories")
+def get_categories():
+    return get_categories_controller()
+
+# 비유사 TOP3 로고 조회
 @router.post("/logo")
-
 async def search_logo(
-
-    image: UploadFile = File(...),
-
-    prompt: str = Form(...),
-
-    category: str = Form(None)
+    category_name: str = Form(...),
+    brand_description: str = Form(...)
 ):
-
     return await search_logo_controller(
-
-        image=image,
-
-        prompt=prompt,
-
-        category=category
+        category_name=category_name,
+        brand_description=brand_description
     )
