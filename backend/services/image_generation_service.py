@@ -12,41 +12,40 @@ def build_prompt(brand_description: str, top3_titles: list, style: str = "", moo
     titles_text = ", ".join([t for t in top3_titles if t])
 
     style_map = {
-        "아이콘만": "icon mark only, no text, no letters",
-        "텍스트만": "logotype text only, no icon",
-        "아이콘+텍스트": "icon with brand name text combined",
+        "아이콘만": "icon mark only, no text, no letters, pure symbol mark",
+        "텍스트만": "logotype wordmark text only, no icon, no symbol",
+        "아이콘+텍스트": "icon symbol combined with brand name text",
     }
     mood_map = {
-        "모던/미니멀": "modern minimal clean design",
-        "클래식/전통": "classic traditional elegant design",
-        "귀여움/친근함": "cute friendly approachable design",
-        "고급스러움/럭셔리": "luxury premium sophisticated design",
+        "모던/미니멀": "modern minimal clean flat design",
+        "클래식/전통": "classic traditional elegant timeless design",
+        "귀여움/친근함": "cute friendly fun approachable design",
+        "고급스러움/럭셔리": "luxury premium sophisticated high-end design",
     }
     color_map = {
-        "밝은 계열": "bright light pastel color palette",
-        "어두운 계열": "dark deep rich color palette",
-        "단색": "monochrome single color design",
-        "컬러풀": "vibrant colorful multi-color design",
+        "밝은 계열": "bright light pastel soft color palette",
+        "어두운 계열": "dark deep bold rich color palette",
+        "단색": "monochrome black and white single color",
+        "컬러풀": "vibrant colorful multi-color energetic palette",
     }
 
-    style_text = style_map.get(style, "")
-    mood_text = mood_map.get(mood, "")
-    color_text = color_map.get(color, "")
+    style_text = style_map.get(style, "simple clean icon mark")
+    mood_text = mood_map.get(mood, "modern professional design")
+    color_text = color_map.get(color, "balanced color palette")
 
-    prompt = f"""
-    Professional logo design.
-    Brand concept: {brand_description}.
-    Inspired by the style characteristics of: {titles_text}.
-    {style_text}.
-    {mood_text}.
-    {color_text}.
-    Single centered composition.
-    Clean vector design.
-    Isolated on plain white background.
-    No watermark, no multiple logos.
-    High quality brand identity.
-    """
-    return prompt.strip()
+    prompt = (
+        f"Professional logo design for {brand_description}. "
+        f"Design style inspired by concepts: {titles_text}. "
+        f"{style_text}. "
+        f"{mood_text}. "
+        f"{color_text}. "
+        f"Single centered composition. "
+        f"Vector flat logo. "
+        f"Pure white background. "
+        f"No watermark. No text unless specified. "
+        f"High quality brand identity design."
+    )
+    return prompt
 
 
 async def generate_logo_images(
@@ -63,22 +62,12 @@ async def generate_logo_images(
         raise ValueError("COLAB_SD_URL이 .env에 설정되지 않았습니다.")
 
     prompt = build_prompt(brand_description, top3_titles, style, mood, color)
-
-    image_b64 = None
-    if top3_image_urls:
-        try:
-            response = requests.get(top3_image_urls[0], timeout=10)
-            response.raise_for_status()
-            image_b64 = base64.b64encode(response.content).decode("utf-8")
-        except Exception:
-            image_b64 = None
+    print("생성 프롬프트:", prompt)
 
     form_data = {
         "prompt": prompt,
         "num_images": 1
     }
-    if image_b64:
-        form_data["image_b64"] = image_b64
 
     response = requests.post(
         f"{COLAB_SD_URL}/generate",
