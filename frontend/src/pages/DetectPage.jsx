@@ -9,15 +9,14 @@ function getRiskLevel(score) {
 }
 
 function DetectPage({ googleToken }) {
-  const [textQuery, setTextQuery] = useState("");
+  const [trademarkName, setTrademarkName] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [submittedText, setSubmittedText] = useState("");
 
-  const canSubmit = Boolean(textQuery.trim() || imageFile);
+  const canSubmit = Boolean(trademarkName.trim() || imageFile);
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0] ?? null;
@@ -36,18 +35,17 @@ function DetectPage({ googleToken }) {
 
   const handleSubmit = async () => {
     if (!canSubmit) {
-      setError("텍스트 또는 이미지를 입력해야 도용 탐지가 가능합니다.");
+      setError("상표명 또는 이미지를 입력해야 도용 탐지가 가능합니다.");
       return;
     }
 
     setLoading(true);
     setError("");
     setResult(null);
-    setSubmittedText(textQuery.trim());
 
     try {
       const response = await detectPlagiarism({
-        textQuery,
+        trademarkName,
         imageFile,
         token: googleToken,
       });
@@ -58,13 +56,6 @@ function DetectPage({ googleToken }) {
       setLoading(false);
     }
   };
-
-  const summaryLabel = useMemo(() => {
-    if (!result) return "";
-    if (result.highest_similarity >= 80) return "위험: 매우 높은 유사도";
-    if (result.highest_similarity >= 50) return "주의: 유사도가 확인되었습니다";
-    return "안전: 유사 상표가 발견되지 않았습니다";
-  }, [result]);
 
   const overallRisk = useMemo(() => {
     if (!result) return null;
@@ -78,8 +69,8 @@ function DetectPage({ googleToken }) {
           <span className="detect-badge">도용 탐지</span>
           <h1>텍스트·이미지 기반 상표 도용 의심 분석</h1>
           <p>
-            AI 임베딩과 유사도 분석을 이용해 업로드한 로고 이미지와 텍스트
-            설명을 기존 상표 데이터와 비교합니다.
+            AI 임베딩과 유사도 분석을 이용해 업로드한 로고 이미지와 상표명을
+            기존 상표 데이터와 비교합니다.
           </p>
         </div>
 
@@ -87,7 +78,7 @@ function DetectPage({ googleToken }) {
           <div>
             <strong>검사 대상 입력</strong>
             <p>
-              텍스트 또는 이미지를 업로드하면 도용 가능성을 자동 분석합니다.
+              상표명 또는 이미지를 입력하면 도용 가능성을 자동 분석합니다.
             </p>
           </div>
         </div>
@@ -97,12 +88,13 @@ function DetectPage({ googleToken }) {
         <div className="detect-panel">
           <div className="detect-card">
             <h2>도용 탐지 입력</h2>
-            <label>상표명 또는 브랜드 설명</label>
-            <textarea
-              placeholder="예: 미니멀한 화이트톤 카페 로고, 글자 중심 심볼형"
-              value={textQuery}
+            <label>상표명</label>
+            <input
+              className="detect-text-input"
+              placeholder="예: 소보루"
+              value={trademarkName}
               onChange={(event) => {
-                setTextQuery(event.target.value);
+                setTrademarkName(event.target.value);
                 setError("");
                 setResult(null);
               }}
@@ -131,8 +123,8 @@ function DetectPage({ googleToken }) {
             <div className="detect-tip">
               <strong>TIP</strong>
               <p>
-                텍스트와 이미지를 동시에 입력하면 시각적 유사도와 텍스트 의미를
-                모두 반영한 도용 탐지가 가능합니다.
+                상표명과 이미지를 동시에 입력하면 텍스트 인덱스와 이미지 인덱스
+                결과를 함께 반영해 도용 탐지를 진행합니다.
               </p>
             </div>
 
@@ -150,7 +142,9 @@ function DetectPage({ googleToken }) {
 
         <div className="detect-result-panel">
           <div
-            className={`detect-card detect-summary-card${overallRisk ? ` detect-summary--${overallRisk.colorClass}` : ""}`}
+            className={`detect-card detect-summary-card${
+              overallRisk ? ` detect-summary--${overallRisk.colorClass}` : ""
+            }`}
           >
             <h2>도용 분석 결과</h2>
 
@@ -236,8 +230,8 @@ function DetectPage({ googleToken }) {
                           <img
                             src={item.image_url}
                             alt={item.trademark_name}
-                            onError={(e) => {
-                              e.target.parentElement.style.display = "none";
+                            onError={(event) => {
+                              event.target.parentElement.style.display = "none";
                             }}
                           />
                         </div>
@@ -264,25 +258,40 @@ function DetectPage({ googleToken }) {
                       </p>
 
                       <div className="detect-item-badges">
-                        {item.explanation.image_contribution_pct > 0 && (
+                        {item.explanation.name_contribution_pct > 0 && (
                           <span>
-                            이미지 기여{" "}
-                            {item.explanation.image_contribution_pct}%
+                            상표명 기여 {item.explanation.name_contribution_pct}%
                           </span>
                         )}
-                        {submittedText && (
+                        {item.explanation.image_contribution_pct > 0 && (
                           <span>
-                            텍스트 기여 {item.explanation.text_contribution_pct}
-                            %
+                            이미지 기여 {item.explanation.image_contribution_pct}%
                           </span>
                         )}
                         {item.explanation.keyword_matched?.length > 0 && (
                           <span>
-                            키워드:{" "}
-                            {item.explanation.keyword_matched.join(" · ")}
+                            키워드: {item.explanation.keyword_matched.join(" · ")}
                           </span>
                         )}
                       </div>
+
+                      {(item.explanation.image_reason ||
+                        item.explanation.text_reason) && (
+                        <div className="detect-reason-box">
+                          {item.explanation.image_reason && (
+                            <div>
+                              <strong>이미지 탐지 근거</strong>
+                              <p>{item.explanation.image_reason}</p>
+                            </div>
+                          )}
+                          {item.explanation.text_reason && (
+                            <div>
+                              <strong>텍스트 탐지 근거</strong>
+                              <p>{item.explanation.text_reason}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </article>
                   );
                 })}

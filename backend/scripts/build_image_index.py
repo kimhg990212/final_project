@@ -34,12 +34,33 @@ def download_remote_image(url: str) -> str:
             if chunk:
                 tmp.write(chunk)
         return tmp.name
+
+
+def collect_image_sources(metadata) -> list[tuple[str, str]]:
+    sources = []
+    seen = set()
+
+    for label, url in (
+        ("image_url", metadata.get("image_url")),
+        ("big_image_url", metadata.get("big_image_url")),
+    ):
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        sources.append((label, url))
+
+    return sources
+
+
 async def build_unified_image_index():
     print("🚀 DB 기반 이미지 FAISS 인덱스 빌드 작업을 시작합니다...")
     os.makedirs(os.path.dirname(OUTPUT_INDEX_PATH), exist_ok=True)
 
     with SessionLocal() as session:
-        res = session.execute(text("SELECT id, application_number, image_url FROM trademark_trends ORDER BY id"))
+        res = session.execute(text(
+            "SELECT id, application_number, image_url, big_image_url "
+            "FROM trademark_trends ORDER BY id"
+        ))
         metadata_records = res.mappings().all()
 
     total_count = len(metadata_records)
@@ -52,39 +73,45 @@ async def build_unified_image_index():
     results = []
 
     for idx, metadata in enumerate(metadata_records, start=1):
-        image_url = metadata["image_url"]
-        if not image_url:
+        image_sources = collect_image_sources(metadata)
+        if not image_sources:
             print(f"⚠️ ID {metadata['id']}({metadata['application_number']})에 이미지 URL이 없습니다.")
             continue
 
-        temp_path = None
-        try:
-            if is_remote_url(image_url):
-                temp_path = download_remote_image(image_url)
-                image_path = temp_path
-            else:
-                image_path = image_url if os.path.exists(image_url) else None
+        embedded_count = 0
+        for source_label, image_url in image_sources:
+            temp_path = None
+            try:
+                if is_remote_url(image_url):
+                    temp_path = download_remote_image(image_url)
+                    image_path = temp_path
+                else:
+                    image_path = image_url if os.path.exists(image_url) else None
 
-            if not image_path or not os.path.exists(image_path):
-                print(f"⚠️ ID {metadata['id']} 이미지 파일을 찾을 수 없습니다: {image_url}")
+                if not image_path or not os.path.exists(image_path):
+                    print(f"⚠️ ID {metadata['id']} {source_label} 이미지 파일을 찾을 수 없습니다: {image_url}")
+                    continue
+
+                vector = await embed_image(image_path)
+                results.append((vector, metadata["id"]))
+                embedded_count += 1
+
+            except Exception as e:
+                print(f"❌ ID {metadata['id']} {source_label} 이미지 임베딩 실패: {e}")
                 continue
 
-            vector = await embed_image(image_path)
-            results.append((vector, metadata["id"]))
+            finally:
+                if temp_path and os.path.exists(temp_path):
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
 
-            if idx % 100 == 0:
-                print(f"⏳ {idx}/{total_count}건 이미지 임베딩 완료...")
+        if embedded_count == 0:
+            print(f"⚠️ ID {metadata['id']}({metadata['application_number']})의 이미지 임베딩을 생성하지 못했습니다.")
 
-        except Exception as e:
-            print(f"❌ ID {metadata['id']} 이미지 임베딩 실패: {e}")
-            continue
-
-        finally:
-            if temp_path and os.path.exists(temp_path):
-                try:
-                    os.remove(temp_path)
-                except OSError:
-                    pass
+        if idx % 100 == 0:
+            print(f"⏳ {idx}/{total_count}건 처리 완료, 이미지 벡터 {len(results)}개 생성...")
 
     if not results:
         print("❌ 유효한 이미지 벡터가 없어 인덱스를 생성하지 않습니다.")

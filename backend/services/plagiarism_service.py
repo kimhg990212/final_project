@@ -1,5 +1,7 @@
 import logging
 import math
+import re
+from difflib import SequenceMatcher
 from typing import Dict, List
 
 from sqlalchemy import select
@@ -14,8 +16,153 @@ from models.schemas import (
 )
 from utils.ai_inference import embed_image, embed_text
 from utils.faiss_handler import faiss_engine
+from utils.llm_explanation import generate_detection_reason
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_trademark_name(value: str) -> str:
+    if not value:
+        return ""
+    return re.sub(r"[^0-9a-zA-Z가-힣]", "", value).lower()
+
+
+def _levenshtein_distance(left: str, right: str) -> int:
+    if left == right:
+        return 0
+    if not left:
+        return len(right)
+    if not right:
+        return len(left)
+
+    previous = list(range(len(right) + 1))
+    for i, left_char in enumerate(left, start=1):
+        current = [i]
+        for j, right_char in enumerate(right, start=1):
+            insert_cost = current[j - 1] + 1
+            delete_cost = previous[j] + 1
+            replace_cost = previous[j - 1] + (left_char != right_char)
+            current.append(min(insert_cost, delete_cost, replace_cost))
+        previous = current
+    return previous[-1]
+
+
+def _calculate_name_similarity(query_name: str, target_name: str) -> float:
+    query = _normalize_trademark_name(query_name)
+    target = _normalize_trademark_name(target_name)
+
+    if not query or not target:
+        return 0.0
+    if query == target:
+        return 100.0
+
+    sequence_score = SequenceMatcher(None, query, target).ratio() * 100
+    distance = _levenshtein_distance(query, target)
+    distance_score = (1 - (distance / max(len(query), len(target)))) * 100
+
+    if distance == 1 and max(len(query), len(target)) <= 4:
+        distance_score = max(distance_score, 86.0)
+
+    if query in target or target in query:
+        containment_score = (min(len(query), len(target)) / max(len(query), len(target))) * 100
+    else:
+        containment_score = 0.0
+
+    return round(max(sequence_score, distance_score, containment_score), 1)
+
+
+def _get_component_weights(has_name: bool, has_description: bool, has_image: bool) -> Dict[str, float]:
+    if has_name and has_description and has_image:
+        return {"name": 0.45, "description": 0.25, "image": 0.30}
+    if has_name and has_description:
+        return {"name": 0.60, "description": 0.40, "image": 0.0}
+    if has_name and has_image:
+        return {"name": 0.50, "description": 0.0, "image": 0.50}
+    if has_description and has_image:
+        return {"name": 0.0, "description": 0.40, "image": 0.60}
+    if has_name:
+        return {"name": 1.0, "description": 0.0, "image": 0.0}
+    if has_description:
+        return {"name": 0.0, "description": 1.0, "image": 0.0}
+    if has_image:
+        return {"name": 0.0, "description": 0.0, "image": 1.0}
+    return {"name": 0.0, "description": 0.0, "image": 0.0}
+
+
+def _get_strong_match_blend_weight(strongest_score_pct: float) -> float:
+    if strongest_score_pct >= 90:
+        return 0.75
+    if strongest_score_pct >= 80:
+        return 0.60
+    if strongest_score_pct >= 70:
+        return 0.40
+    if strongest_score_pct >= 60:
+        return 0.25
+    if strongest_score_pct >= 50:
+        return 0.10
+    return 0.0
+
+
+def _calculate_final_score(
+    *,
+    name_score_pct: float,
+    description_score_pct: float,
+    image_score_pct: float,
+    weights: Dict[str, float],
+    has_name: bool,
+    has_image: bool,
+) -> float:
+    base_score = (
+        (name_score_pct * weights["name"])
+        + (description_score_pct * weights["description"])
+        + (image_score_pct * weights["image"])
+    )
+
+    if not (has_name and has_image):
+        return base_score
+
+    strongest_score = max(name_score_pct, image_score_pct)
+    strong_match_weight = _get_strong_match_blend_weight(strongest_score)
+    if strong_match_weight == 0:
+        return base_score
+
+    return (strongest_score * strong_match_weight) + (base_score * (1 - strong_match_weight))
+
+
+def _calculate_display_contributions(
+    *,
+    name_score_pct: float,
+    description_score_pct: float,
+    image_score_pct: float,
+    weights: Dict[str, float],
+    has_name: bool,
+    has_image: bool,
+) -> Dict[str, float]:
+    weighted_name = (name_score_pct * weights["name"]) + (
+        description_score_pct * weights["description"]
+    )
+    weighted_image = image_score_pct * weights["image"]
+
+    if has_name and has_image:
+        strongest_score = max(name_score_pct, image_score_pct)
+        strong_match_weight = _get_strong_match_blend_weight(strongest_score)
+        if strong_match_weight > 0:
+            weighted_name *= 1 - strong_match_weight
+            weighted_image *= 1 - strong_match_weight
+
+            if name_score_pct >= image_score_pct:
+                weighted_name += strongest_score * strong_match_weight
+            else:
+                weighted_image += strongest_score * strong_match_weight
+
+    total_weighted = weighted_name + weighted_image
+    if total_weighted <= 0:
+        return {"name": 0.0, "image": 0.0}
+
+    return {
+        "name": (weighted_name / total_weighted) * 100,
+        "image": (weighted_image / total_weighted) * 100,
+    }
 
 
 def convert_raw_score_to_similarity(raw_score: float) -> float:
@@ -30,33 +177,60 @@ def convert_raw_score_to_similarity(raw_score: float) -> float:
 
 async def analyze_plagiarism(
     db: Session,
+    trademark_name: str = None,
+    description_query: str = None,
     text_query: str = None,
     image_file_path: str = None,
     top_k: int = 10,
 ) -> List[PlagiarismDetectionItem]:
-    text_vector, image_vector = None, None
-    weight_text, weight_image = 0.0, 0.0
+    description_text = description_query or text_query
+    input_text_for_reason = " / ".join(
+        text for text in [trademark_name, description_text] if text
+    )
 
-    if text_query:
-        text_vector = await embed_text(text_query)
-        weight_text = 1.0
+    has_name = bool(trademark_name)
+    has_description = bool(description_text)
+    has_image = bool(image_file_path)
+    weights = _get_component_weights(has_name, has_description, has_image)
+
+    description_vector, image_vector = None, None
+
+    if description_text:
+        description_vector = await embed_text(description_text)
 
     if image_file_path:
         image_vector = await embed_image(image_file_path)
-        weight_image = 1.0
-
-    if text_vector is not None and image_vector is not None:
-        weight_text = 0.4
-        weight_image = 0.6
 
     fusion_map: Dict[int, Dict[str, float]] = {}
 
-    if text_vector is not None:
-        text_scores, text_indices = faiss_engine.search_text(text_vector, top_k=100)
+    if trademark_name and db is not None:
+        name_rows = db.execute(
+            select(TrademarkTrend.id, TrademarkTrend.title).where(TrademarkTrend.title.isnot(None))
+        ).all()
+
+        for tm_id, title in name_rows:
+            name_score = _calculate_name_similarity(trademark_name, title)
+            if name_score < 35.0:
+                continue
+            fusion_map[int(tm_id)] = {
+                "name_score": name_score / 100,
+                "description_score": 0.0,
+                "image_score": 0.0,
+            }
+
+    if description_vector is not None:
+        text_scores, text_indices = faiss_engine.search_text(description_vector, top_k=100)
         for raw_score, tm_id in zip(text_scores[0], text_indices[0]):
             if tm_id == -1:
                 continue
-            fusion_map[int(tm_id)] = {"text_score": float(raw_score), "image_score": 0.0}
+            target_id = int(tm_id)
+            if target_id not in fusion_map:
+                fusion_map[target_id] = {
+                    "name_score": 0.0,
+                    "description_score": 0.0,
+                    "image_score": 0.0,
+                }
+            fusion_map[target_id]["description_score"] = float(raw_score)
 
     if image_vector is not None:
         image_scores, image_indices = faiss_engine.search_image(image_vector, top_k=100)
@@ -65,23 +239,45 @@ async def analyze_plagiarism(
                 continue
             target_id = int(tm_id)
             if target_id not in fusion_map:
-                fusion_map[target_id] = {"text_score": 0.0, "image_score": 0.0}
-            fusion_map[target_id]["image_score"] = float(raw_score)
+                fusion_map[target_id] = {
+                    "name_score": 0.0,
+                    "description_score": 0.0,
+                    "image_score": 0.0,
+                }
+            fusion_map[target_id]["image_score"] = max(
+                fusion_map[target_id]["image_score"],
+                float(raw_score),
+            )
 
     final_rankings = []
     for tm_id, scores in fusion_map.items():
-        s_text = scores["text_score"]
-        s_img = scores["image_score"]
-        weighted_text_score = s_text * weight_text
-        weighted_image_score = s_img * weight_image
-        total_score = (weighted_text_score + weighted_image_score) * 100
+        name_score_pct = scores["name_score"] * 100
+        description_score_pct = scores["description_score"] * 100
+        image_score_pct = scores["image_score"] * 100
+        weighted_text_score = (
+            name_score_pct * weights["name"]
+        ) + (
+            description_score_pct * weights["description"]
+        )
+        weighted_image_score = image_score_pct * weights["image"]
+        total_score = _calculate_final_score(
+            name_score_pct=name_score_pct,
+            description_score_pct=description_score_pct,
+            image_score_pct=image_score_pct,
+            weights=weights,
+            has_name=has_name,
+            has_image=has_image,
+        )
 
         final_rankings.append(
             {
                 "trademark_id": tm_id,
                 "total_score": total_score,
-                "text_score": weighted_text_score * 100,
-                "image_score": weighted_image_score * 100,
+                "name_score": name_score_pct,
+                "description_score": description_score_pct,
+                "text_score": weighted_text_score,
+                "image_score": image_score_pct,
+                "weighted_image_score": weighted_image_score,
             }
         )
 
@@ -100,28 +296,33 @@ async def analyze_plagiarism(
         logger.warning("DB session is None, returning synthesized trademark metadata.")
 
     response_items: List[PlagiarismDetectionItem] = []
+
     for rank_item in top_results:
         tm_id = rank_item["trademark_id"]
         total_score = rank_item["total_score"]
         text_score = round(rank_item["text_score"], 1)
-        image_score = round(rank_item["image_score"], 1)
+        image_score = round(rank_item["weighted_image_score"], 1)
 
-        weighted_text = rank_item["text_score"]
-        weighted_image = rank_item["image_score"]
-        total_weighted = weighted_text + weighted_image
-
-        if total_weighted > 0:
-            img_contrib = (weighted_image / total_weighted) * 100
-            txt_contrib = (weighted_text / total_weighted) * 100
-        else:
-            img_contrib = 0.0
-            txt_contrib = 0.0
+        contributions = _calculate_display_contributions(
+            name_score_pct=rank_item["name_score"],
+            description_score_pct=rank_item["description_score"],
+            image_score_pct=rank_item["image_score"],
+            weights=weights,
+            has_name=has_name,
+            has_image=has_image,
+        )
+        name_contrib = contributions["name"]
+        img_contrib = contributions["image"]
+        txt_contrib = name_contrib
+        desc_contrib = 0.0
 
         tm_name = f"FAISS matched trademark (ID: {tm_id})"
         app_number = f"40-2026-{tm_id % 10000000:07d}"
         applicant_name = "KIPRIS public data"
         application_date = ""
         image_url = ""
+        ocr_text = ""
+        caption = ""
         matched_keywords = []
 
         if db is not None:
@@ -145,27 +346,65 @@ async def analyze_plagiarism(
                 application_date = raw_date.strftime("%Y-%m-%d")
 
             image_url = meta.image_url or meta.big_image_url or ""
+            ocr_text = getattr(meta, "ocr_text", "") or ""
+            caption = getattr(meta, "caption", "") or ""
 
-            if text_query:
-                user_words = set(text_query.split())
-                db_words = set((meta.title or "").split())
+            if description_text or trademark_name:
+                user_words = set((input_text_for_reason or "").split())
+                db_text = f"{meta.title or ''} {ocr_text}"
+                db_words = set(db_text.split())
                 matched_keywords = [w for w in user_words if w in db_words and len(w) > 1]
         else:
-            if text_query:
-                matched_keywords = [word for word in text_query.split() if len(word) > 1]
+            if input_text_for_reason:
+                matched_keywords = [word for word in input_text_for_reason.split() if len(word) > 1]
 
-        if weight_image > 0 and weight_text > 0:
-            summary_text = "이미지와 텍스트를 함께 분석했습니다."
-        elif weight_image > 0:
-            summary_text = "이미지 기반 유사도 검색을 수행했습니다."
+        if weights["name"] > 0 and weights["description"] > 0 and weights["image"] > 0:
+            summary_text = "상표명 문자 유사도, 추가 설명의 의미, 이미지 형태가 모두 분석되었습니다."
+        elif weights["name"] > 0 and weights["description"] > 0:
+            summary_text = "상표명 문자 유사도와 추가 설명의 의미가 함께 분석되었습니다."
+        elif weights["name"] > 0 and weights["image"] > 0:
+            summary_text = "상표명 문자 유사도와 이미지 형태가 함께 분석되었습니다."
+        elif weights["description"] > 0 and weights["image"] > 0:
+            summary_text = "추가 설명의 의미와 이미지 형태가 함께 분석되었습니다."
+        elif weights["image"] > 0:
+            summary_text = "시각적 형태를 기준으로 유사도가 산출되었습니다."
+        elif weights["name"] > 0:
+            summary_text = "상표명 글자 자체의 유사도를 기준으로 산출되었습니다."
         else:
-            summary_text = "상표명과 텍스트 기반 유사도 검색을 수행했습니다."
+            summary_text = "추가 설명의 의미적 묘사를 기준으로 유사도가 산출되었습니다."
+
+        llm_reason = await generate_detection_reason(
+            trademark_name_query=trademark_name,
+            description_query=description_text,
+            text_query=input_text_for_reason,
+            uploaded_image_path=image_file_path,
+            trademark_name=tm_name,
+            application_number=app_number,
+            trademark_image_url=image_url,
+            ocr_text=ocr_text,
+            caption=caption,
+            name_score=rank_item["name_score"],
+            description_score=rank_item["description_score"],
+            text_score=rank_item["text_score"],
+            image_score=rank_item["image_score"],
+            total_score=total_score,
+            image_contribution_pct=img_contrib,
+            text_contribution_pct=txt_contrib,
+            name_contribution_pct=name_contrib,
+            description_contribution_pct=desc_contrib,
+            matched_keywords=matched_keywords,
+        )
 
         explanation = PlagiarismExplanation(
             summary=summary_text,
             image_contribution_pct=round(img_contrib, 1),
             text_contribution_pct=round(txt_contrib, 1),
+            name_contribution_pct=round(name_contrib, 1),
+            description_contribution_pct=round(desc_contrib, 1),
             keyword_matched=matched_keywords,
+            image_reason=llm_reason["image_reason"],
+            text_reason=llm_reason["text_reason"],
+            llm_generated=llm_reason["llm_generated"],
         )
 
         response_items.append(

@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 async def handle_plagiarism_detection(
     db: Session,
     user_id: str,
+    trademark_name: Optional[str] = None,
+    description_query: Optional[str] = None,
     text_query: Optional[str] = None,
     image_file: Optional[UploadFile] = None
 ) -> PlagiarismDetectionResponse:
@@ -20,10 +22,10 @@ async def handle_plagiarism_detection(
     도용 탐지 요청을 처리하는 컨트롤러 로직 (FR-01, FR-02, FR-04 통합)
     """
     # 1. 입력 예외 처리: 둘 다 들어오지 않은 경우
-    if not text_query and not image_file:
+    if not trademark_name and not description_query and not text_query and not image_file:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="도용 탐지를 진행할 텍스트 묘사 또는 로고 이미지를 최소 하나 이상 입력해야 합니다."
+            detail="도용 탐지를 진행할 상표명 또는 로고 이미지를 최소 하나 이상 입력해야 합니다."
         )
 
     saved_image_path = None
@@ -38,6 +40,8 @@ async def handle_plagiarism_detection(
         # 유사도 정렬, 반올림, FR-04 근거 생성이 서비스 단에서 완료되어 반환됨
         detection_items = await plagiarism_service.analyze_plagiarism(
             db=db,
+            trademark_name=trademark_name,
+            description_query=description_query,
             text_query=text_query,
             image_file_path=saved_image_path,
             top_k=10  # 상위 10개 출력 제한
@@ -47,7 +51,9 @@ async def handle_plagiarism_detection(
         history_id = await plagiarism_service.save_upload_history(
             db=db,
             user_id=user_id,
-            input_text=text_query,
+            input_text=" / ".join(
+                text for text in [trademark_name, description_query, text_query] if text
+            ),
             uploaded_image_path=saved_image_path,
             detection_results=detection_items
         )
