@@ -1,7 +1,17 @@
 const BASE_URL = "http://localhost:5000";
 
-export async function detectPlagiarism({ textQuery, imageFile, token }) {
+export async function detectPlagiarism({
+  trademarkName,
+  textQuery,
+  imageFile,
+  token,
+}) {
   const formData = new FormData();
+
+  if (trademarkName) {
+    formData.append("trademark_name", trademarkName);
+  }
+
   if (textQuery) {
     formData.append("text_query", textQuery);
   }
