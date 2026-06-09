@@ -8,15 +8,15 @@ from controllers.upload_controllers import (
 )
 from schemas.upload_schema import GenerateRequest
 
-router = APIRouter(tags=["FR-07 업로드 자료 기반 생성"])
+router = APIRouter(prefix="/Upload", tags=["Upload"])
 
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     return await handle_upload(file, db)
 
 @router.post("/generate")
-async def generate(req: GenerateRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    return await handle_generate(req, db, background_tasks)
+def generate_content(req: GenerateRequest, db: Session = Depends(get_db)):
+    return handle_generate(req, db)
 
 @router.get("/result/{result_id}")
 def get_result(result_id: int, db: Session = Depends(get_db)):
