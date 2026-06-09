@@ -57,6 +57,8 @@ class DetectionHistoryItem(BaseModel):
     description: str
     time: str
     downloadable: bool = True
+    image_path: Optional[str] = None
+    image_url: Optional[str] = None
     history_id: Optional[int] = None
     total_found: int = 0
     highest_similarity: float = 0.0

@@ -1,3 +1,5 @@
+import { fetchWithAuthExpiry } from "./apiClient";
+
 const BASE_URL = "http://localhost:5000";
 
 export async function googleLogin({ token }) {
@@ -20,7 +22,7 @@ export async function googleLogin({ token }) {
 }
 
 export async function getGoogleMe({ token }) {
-  const response = await fetch(`${BASE_URL}/users/google/me`, {
+  const response = await fetchWithAuthExpiry(`${BASE_URL}/users/google/me`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -71,7 +73,7 @@ export async function logout() {
 }
 
 export async function updateGoogleMe({ token, email, nickname }) {
-  const response = await fetch(`${BASE_URL}/users/google/me`, {
+  const response = await fetchWithAuthExpiry(`${BASE_URL}/users/google/me`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

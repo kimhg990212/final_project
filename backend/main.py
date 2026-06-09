@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 
 
-from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth, upload_route, generate_route
+from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth, upload_route, generate_route, mypage_route
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -59,6 +59,7 @@ app.include_router(text_logo.router)
 app.include_router(admin_route.router)
 
 app.include_router(generate_route.router)
+app.include_router(mypage_route.router)
 
 # FR-08기능 추가 라우터
 # from routes.generate_route import (

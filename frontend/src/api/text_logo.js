@@ -1,3 +1,5 @@
+import { fetchWithAuthExpiry } from "./apiClient";
+
 const BASE_URL = "http://localhost:5000";
 
 export async function generateTextLogo({ text, userId }) {
@@ -27,7 +29,7 @@ export async function saveDownloadHistory({
   prompt,
   imagePath,
 }) {
-  const response = await fetch(`${BASE_URL}/generate/download`, {
+  const response = await fetchWithAuthExpiry(`${BASE_URL}/generate/download`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

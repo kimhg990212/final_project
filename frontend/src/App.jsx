@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -17,7 +17,7 @@ import MyPage from "./pages/MyPage";
 import AdminPage from "./pages/AdminPage";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
-import { googleLogin } from "./api/auth";
+import { getGoogleMe, googleLogin } from "./api/auth";
 import { URL } from "./constants";
 import { isAdminRole } from "./utils/auth";
 
@@ -80,6 +80,8 @@ function AdminRouteGuard({ isLoggedIn, isAdmin }) {
 
   return <AdminPage />;
 }
+
+void AdminRouteGuard;
 
 function SiteLayout({
   isLoggedIn,
@@ -169,6 +171,65 @@ function App() {
     window.localStorage.removeItem(userRoleStorageKey);
   }, [userRole]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncGoogleProfile = async () => {
+      if (!isLoggedIn || !googleToken) {
+        return;
+      }
+
+      try {
+        const user = await getGoogleMe({ token: googleToken });
+        if (!isMounted) return;
+
+        if (user?.nickname) {
+          setUserNickname(user.nickname);
+        }
+
+        if (user?.role) {
+          setUserRole(user.role);
+        }
+
+        if (user?.user_id) {
+          setUserId(user.user_id);
+        }
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: user?.user_id ?? null,
+            email: user?.email || "",
+            nickname: user?.nickname || "",
+            role: user?.role || "",
+          }),
+        );
+      } catch (error) {
+        console.error("Failed to sync Google profile:", error);
+      }
+    };
+
+    syncGoogleProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoggedIn, googleToken]);
+
+  const handleProfileUpdate = (nextNickname) => {
+    const trimmedNickname = nextNickname?.trim() || "";
+    setUserNickname(trimmedNickname);
+
+    const storedUser = JSON.parse(window.localStorage.getItem("user") || "{}");
+    window.localStorage.setItem(
+      "user",
+      JSON.stringify({
+        ...storedUser,
+        nickname: trimmedNickname,
+      }),
+    );
+  };
+
   const handleGoogleLogin = async (credentialResponse) => {
     // console.log("Google credential response:", credentialResponse);
     // console.log("Google credential token:", credentialResponse?.credential);
@@ -195,7 +256,7 @@ function App() {
         JSON.stringify({
           id: result?.user_id ?? null,
           email: result?.email || decoded?.email || "",
-          nickname: result?.nickname || decoded?.name || "",
+          nickname: result?.nickname || "",
           role: result?.role || "",
         }),
       );
@@ -206,7 +267,7 @@ function App() {
       alert("API 요청에 실패하였습니다. 잠시후 시도해주세요.");
     }
   };
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setIsLoggedIn(false);
     setGoogleToken("");
     setUserId(null);
@@ -214,7 +275,19 @@ function App() {
     setUserRole("");
 
     localStorage.removeItem("user");
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      handleLogout();
+    };
+
+    window.addEventListener("auth:expired", handleAuthExpired);
+
+    return () => {
+      window.removeEventListener("auth:expired", handleAuthExpired);
+    };
+  }, [handleLogout]);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const isAdmin = isAdminRole(userRole);
@@ -266,18 +339,19 @@ function App() {
               )
             }
           />
-          <Route
-            path={URL.MYPAGE}
-            element={
-              isLoggedIn ? (
-                <MyPage
-                  onDeleteAccount={handleLogout}
-                  googleToken={googleToken}
-                />
-              ) : (
-                <Navigate to={URL.HOME} replace />
-              )
-            }
+        <Route
+          path={URL.MYPAGE}
+          element={
+            isLoggedIn ? (
+              <MyPage
+                onDeleteAccount={handleLogout}
+                googleToken={googleToken}
+                onProfileUpdate={handleProfileUpdate}
+              />
+            ) : (
+              <Navigate to={URL.HOME} replace />
+            )
+          }
           />
         </Route>
 

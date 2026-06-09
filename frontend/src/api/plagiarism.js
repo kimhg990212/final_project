@@ -1,3 +1,5 @@
+import { fetchWithAuthExpiry } from "./apiClient";
+
 const BASE_URL = "http://localhost:5000";
 
 export async function detectPlagiarism({
@@ -25,7 +27,7 @@ export async function detectPlagiarism({
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}/api/v1/detect`, {
+  const response = await fetchWithAuthExpiry(`${BASE_URL}/api/v1/detect`, {
     method: "POST",
     headers,
     body: formData,

@@ -80,6 +80,8 @@ npm run dev
 
 [faiss_image](https://drive.google.com/file/d/1EI63FpxH6hh0u_Ynxb4OSrUvlQPBe9gJ/view?usp=sharing)
 
+[faiss_image](https://drive.google.com/file/d/1hvOu4ocq4jbFPd0RssYLT6-7Dp2aJVpv/view?usp=sharing)
+
 ```bash
 # 폴더 이동
 cd backend
