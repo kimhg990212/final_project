@@ -13,7 +13,11 @@ def save_image_from_url(image_url: str):
     filename = f"text_logo_{uuid4().hex}.png"
     save_path = os.path.join(UPLOAD_DIR, filename)
 
-    response = requests.get(image_url, timeout=60)
+    headers = {
+        "ngrok-skip-browser-warning": "true"
+    }
+
+    response = requests.get(image_url, headers=headers, timeout=60)
     response.raise_for_status()
 
     with open(save_path, "wb") as f:
@@ -35,30 +39,56 @@ def generate_logo_image(prompt: str):
 
     comfyui_url = comfyui_url.rstrip("/")
 
+    headers = {
+        "ngrok-skip-browser-warning": "true"
+    }
+
     logo_prompt = f"""
-ONE single logo only.
-A single centered icon mark.
-Only one symbol in the entire image.
-Minimal flat vector logo.
-Clean simple outline.
-Isolated on plain white background.
-No grid, no collage, no logo sheet, no variations, no multiple icons.
-No panels, no frames, no mockup.
-Professional brand identity logo.
+cute mascot logo,
+professional vector logo,
+flat logo design,
+modern brand identity,
+commercial vector icon,
+clean geometric shapes,
+minimal flat design,
+vibrant green and orange color palette,
+modern brand identity,
+award winning logo design,
+sharp edges,
+centered composition,
+white background,
+
 {prompt}
-"""
+""".strip()
+
+    negative_prompt = """
+words,
+watermark,
+logo sheet,
+multiple logos,
+collage,
+grid,
+photo,
+realistic,
+3d render,
+painting,
+blurry,
+low quality,
+distorted,
+messy composition
+""".strip()
 
     workflow = {
         "3": {
             "class_type": "KSampler",
             "inputs": {
                 "seed": int(time.time()),
-                "steps": 25,
-                "cfg": 8,
+                "steps": 30,
+                "cfg": 7,
                 "sampler_name": "euler",
                 "scheduler": "simple",
                 "denoise": 1,
-                "model": ["10", 0],
+                "model": ["11", 0],
                 "positive": ["6", 0],
                 "negative": ["7", 0],
                 "latent_image": ["5", 0]
@@ -73,8 +103,8 @@ Professional brand identity logo.
         "5": {
             "class_type": "EmptyLatentImage",
             "inputs": {
-                "width": 512,
-                "height": 512,
+                "width": 1024,
+                "height": 1024,
                 "batch_size": 1
             }
         },
@@ -82,14 +112,14 @@ Professional brand identity logo.
             "class_type": "CLIPTextEncode",
             "inputs": {
                 "text": logo_prompt,
-                "clip": ["10", 1]
+                "clip": ["11", 1]
             }
         },
         "7": {
             "class_type": "CLIPTextEncode",
             "inputs": {
-                "text": "grid, collage, logo sheet, multiple logos, multiple icons, variations, panels, divided layout, tiled layout, split screen, repeated symbols, poster, mockup, packaging, menu board, text, letters, watermark, blurry, low quality, realistic, photo, painting, 3d, complex background",
-                "clip": ["10", 1]
+                "text": negative_prompt,
+                "clip": ["11", 1]
             }
         },
         "8": {
@@ -110,10 +140,20 @@ Professional brand identity logo.
             "class_type": "LoraLoader",
             "inputs": {
                 "lora_name": "logo_sdxl.safetensors",
-                "strength_model": 1.0,
-                "strength_clip": 1.0,
+                "strength_model": 0.8,
+                "strength_clip": 0.8,
                 "model": ["4", 0],
                 "clip": ["4", 1]
+            }
+        },
+        "11": {
+            "class_type": "LoraLoader",
+            "inputs": {
+                "lora_name": "Vector_illustration_XL.safetensors",
+                "strength_model": 0.5,
+                "strength_clip": 0.5,
+                "model": ["10", 0],
+                "clip": ["10", 1]
             }
         }
     }
@@ -125,6 +165,7 @@ Professional brand identity logo.
                 "prompt": workflow,
                 "client_id": str(uuid.uuid4())
             },
+            headers=headers,
             timeout=30
         )
 
@@ -141,6 +182,7 @@ Professional brand identity logo.
         for _ in range(300):
             history_response = requests.get(
                 f"{comfyui_url}/history/{prompt_id}",
+                headers=headers,
                 timeout=30
             )
 

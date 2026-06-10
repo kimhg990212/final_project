@@ -31,7 +31,9 @@ def generate_text_logo(user_text: str, user_id: int, db):
         "generated_prompt": prompt,
         "image_path": image_result.get("image_path"),
         "image_url": image_result.get("image_url"),
-        "image_status": image_result.get("status")
+        "image_status": image_result.get("status"),
+        "image_message": image_result.get("message"),
+        "comfyui_image_url": image_result.get("comfyui_image_url"),
     }
 
     return history_data
