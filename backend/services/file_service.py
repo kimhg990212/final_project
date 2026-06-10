@@ -1,3 +1,4 @@
+import uuid
 import os
 import shutil
 from fastapi import UploadFile, HTTPException
@@ -17,8 +18,9 @@ async def save_upload_file(file: UploadFile) -> dict:
     await file.seek(0)
     
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    save_path = os.path.join(settings.UPLOAD_DIR, file.filename)
-    
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    save_path = os.path.join(settings.UPLOAD_DIR, unique_filename) # UPLOAD_DIR: config 설정값
+     
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     

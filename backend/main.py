@@ -102,7 +102,7 @@ def root():
 #     search_router
 # )
 
-app.include_router(upload_route.router, prefix="/upload")
+app.include_router(upload_route.router)
 
 app.include_router(trend.router, prefix="/trends")
 
