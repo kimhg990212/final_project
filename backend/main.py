@@ -1,4 +1,5 @@
-import uvicorn, os
+import uvicorn
+import os
 import logging
 import pathlib
 
@@ -11,8 +12,9 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 
-
-from routes import post, text_logo, trend, user, admin_route, plagiarism_route, google_auth, upload_route, generate_route, mypage_route, search_route
+#plagiarism_route
+# 라우터 import
+from routes import text_logo, trend, user,admin_route, plagiarism_route, google_auth, upload_route, generate_route, mypage_route, search_route
 
 
 # 로깅 설정
@@ -32,22 +34,38 @@ async def lifespan(app: FastAPI):
     
     logger.info("AI 도용 탐지 시스템 서버를 종료합니다.")
 
+
+# FastAPI 앱 생성
 app = FastAPI(
     title="AI기반 상표/로고 도용 탐지 및 로고 생성 시스템 API",
     description="CLIP 임베딩 및 FAISS 백터 스토리지를 활용한 실시간 도용 매칭 백엔드 엔진",
     version="1.0.0",
     lifespan=lifespan
 )
+
+
+# 생성된 로고 이미지 정적 파일 제공
+# 예: uploads/images/test.png → http://localhost:5000/uploads/images/test.png
+
+# 폴더없으면 생성하기코드
+static_dir = pathlib.Path(__file__).parent / "static"
+static_dir.mkdir(exist_ok=True)
+(static_dir / "generated").mkdir(exist_ok=True) 
+
+
+# 자연어 -> 이미지 생성 저장을 위한
 app.mount(
     "/uploads/images",
     StaticFiles(directory="uploads/images"),
     name="uploads_images"
 )
+# 추천 이미지 생성 저장을 위한
+app.mount(
+    "/static",
+    StaticFiles(directory=str(static_dir)),
+    name="static"
+)
 
-static_dir = pathlib.Path(__file__).parent / "static"
-static_dir.mkdir(exist_ok=True)
-(static_dir / "generated").mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # React 프론트엔드 연동을 위한 CORS 정책 추가
 app.add_middleware(
@@ -57,20 +75,59 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# 기본 서버 상태 확인 API
+@app.get("/")
+def root():
+
+    return {
+        "message": "Server Running"
+    }
+
+
+# ============================
+# Router 등록
+# ============================
+
 # 도용 탐지 기능 추가 라우터(도용 탐지 -> 결과 및 리포트 출력)
 app.include_router(plagiarism_route.router)
+
 
 # FR-05기능 추가 라우터 (자연어 -> 이미지 생성 기능)
 app.include_router(text_logo.router)
 
-# FR-19기능 추가 라우터 (관리자- 사용자 목록 조회 기능)
+# FR-19기능 추가 라우터 (관리자기능)
 app.include_router(admin_route.router)
 
+
+# FR-08기능 추가 라우터 (추천 이미지 생성 기능)
 app.include_router(generate_route.router)
+
+# FR-09기능 추가 라우터 (추천 이미지 생성을 위해 Top3 조회 기능)
+app.include_router(search_route.router)
+
+
+# FR-10기능 추가 라우터 (트랜드 조회 기능)
+app.include_router(trend.router, prefix="/trends")
+
+
+# FR-07기능 추가 라우터 (파일 업로드 기능)
+app.include_router(upload_route.router)
+
+
+
+# FR-11~14기능 추가 라우터 (로그인 기능)
+app.include_router(user.router, prefix= "/users")
+
+# 구글 로그인 
+app.include_router(google_auth.router, prefix="/users/google")
+
+# FR-15기능 추가 라우터 (마이페이지 기능)
 app.include_router(mypage_route.router)
 
 
-app.include_router(search_route.router)
+
 # FR-08기능 추가 라우터
 # from routes.generate_route import (
 #     router as generate_router
@@ -79,38 +136,21 @@ app.include_router(search_route.router)
 # from middleware.error_middleware import (
 #     global_exception_handler
 # )
-# app.include_router(generate_router)
 
 # app.add_exception_handler(
 #     Exception,
 #     global_exception_handler
 # )
 
-@app.get("/")
-def root():
-
-    return {
-        "message": "Server Running"
-    }
-
 #FR-09기능 추가 라우터 
 # from routes.search_route import (
 #     router as search_router
 # )
 
-# app.include_router(
-#     search_router
-# )
 
-app.include_router(upload_route.router)
 
-app.include_router(trend.router, prefix="/trends")
-
-app.include_router(post.router, prefix="/posts")
-
-app.include_router(user.router, prefix= "/users")
-app.include_router(google_auth.router, prefix="/users/google")
-
+# python main.py로 실행할 경우
+# 아니면 python -m uvicorn main:app --host 0.0.0.0 --port 5000 --reload 로 실행
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",          # 모듈:앱 경로

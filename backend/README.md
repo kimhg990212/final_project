@@ -23,6 +23,131 @@
 
 ---
 
+```txt
+backend/
+ ├─ controllers/ API 요청을 처리하기 전후로 서비스 계층을 호출하고 응답 형태를 정리
+ │   └─ download_controller.py        생성된 로고 사용자별 다운로드 기록을 관리
+ │   └─ generate_controller.py        추천로고생성
+ │   └─ google_auth_controller.py     구글로그인
+ │   └─ plagiarism_controller.py      도용탐지
+ │   └─ search_controller.py          추천로고를 위한 top3 조회
+ │   └─ text_logo_controller.py       자연어->로고생성
+ │   └─ trend.py                      트렌드 조회
+ │   └─ upload_controllers.py         파일 업로드
+ │
+ ├─ enrichment/ 상표 데이터 보강, 키워드/캡션/추가 정보 생성 등 데이터 전처리 관련 기능 관리
+ │   └─ enrich_blip.py
+ │   └─ enrich_tesseract_ocr.py
+ │   └─ export_enrichment.py
+ │   └─ import_enrichment.py
+ │   └─ import_trend_summaries.py
+ │   └─ llm_input_data.json
+ │   └─ llm_output_summaries_with_desc_140.json
+ │   └─ prepare_llm_input.py
+ │   └─ trademark_trends_export.json
+ │
+ ├─ index/ 검색 또는 벡터 인덱스 관련 파일 관리
+ │   └─ faiss_image.index
+ │   └─ faiss_text.index
+ │
+ ├─ middleware/ 전역 예외 처리, 요청/응답 처리 등 미들웨어 기능 관리
+ │   └─ auth_middleware.py
+ │   └─ error_middleware.py
+ │
+ ├─ models/     DB 테이블과 매핑되는 SQLAlchemy 모델 정의
+ │   └─ domain.py
+ │   └─ download_history.py
+ │   └─ file_model.py
+ │   └─ history_model.py
+ │   └─ kipris_trademark.py
+ │   └─ logo_model.py
+ │   └─ result_model.py
+ │   └─ schemas.py
+ │   └─ text_logo_model.py
+ │   └─ text_logo_image_result.py
+ │   └─ trend.py
+ │   └─ user.py
+ │
+ ├─ routes/     FastAPI API 엔드포인트 정의
+ │   └─ admin_route.py
+ │   └─ generate_route.py
+ │   └─ google_auth.py
+ │   └─ history_route.py
+ │   └─ mypage_route.py
+ │   └─ plagiarism_route.py
+ │   └─ search_route.py
+ │   └─ text_logo.py
+ │   └─ trend.py
+ │   └─ upload_route.py
+ │   └─ user.py
+ │
+ ├─ schemas/    요청/응답 데이터 검증을 위한 Pydantic 스키마 정의
+ │   └─ download_schema.py
+ │   └─ google_auth.py
+ │   └─ upload_schema.py
+ │   └─ user.py
+ │
+ ├─ scripts/    데이터 적재, 초기 설정, 배치 실행 등 독립 실행 스크립트 관리
+ │   └─ build_image_index.py
+ │   └─ build_text_index.py
+ │
+ ├─ services/   주요 기능의 핵심 비즈니스 로직 처리
+ │   └─ ai_service.py
+ │   └─ download_service.py
+ │   └─ embedding_service.py
+ │   └─ file_service.py
+ │   └─ history_service.py
+ │   └─ image_generation_service.py
+ │   └─ mypage_service.py
+ │   └─ plagiarism_service.py
+ │   └─ text_logo_service.py
+ │   └─ trend.py
+ │   └─ vector_search_service.py
+ │
+ ├─ static/generated/  추천로고 생성된 이미지 파일 저장 경로
+ │
+ ├─ uploads/images/  사용자가 업로드하거나 생성된 이미지 파일 저장 경로
+ │
+ ├─ utils/   공통 유틸 함수, 인증, DB 연결, 파일 처리 등 보조 기능 관리
+ │   └─ ai_inference.py
+ │   └─ auth.py
+ │   └─ categories.py
+ │   └─ database.py
+ │   └─ faiss_handler.py
+ │   └─ google_auth.py
+ │   └─ llm_explanation.py
+ │   └─ response_utils.py
+ │   └─ text_logo_image_generator.py
+ │   └─ text_logo_keyword_extractor.py
+ │   └─ text_logo_prompt_builder.py
+ │   └─ text_logo_text_composer.py
+ │   └─ text_utils.py
+ │
+ ├─ vector_db/  FAISS 벡터 DB 및 벡터 검색 인덱스 관련 파일 관리
+ │   └─ vector_loader.py
+ │
+ │
+ │
+ │
+ │
+ │
+ ├─ .env                   실제 실행 환경변수 파일
+ │
+ ├─ .env.sample            팀원 공유용 환경변수 예시 파일
+ │
+ ├─ .gitignore             Git 추적 제외 파일 설정
+ │
+ ├─ config.py              프로젝트 설정값 관리
+ │
+ ├─ kipris_data_loader.py  KIPRIS 상표 데이터 적재 스크립트
+ │
+ ├─ main.py                FastAPI 서버 실행, 라우터 등록, CORS 및 정적 파일 설정
+ │
+ ├─ README.md              프로젝트 실행 및 기능 설명 문서
+ │
+ └─ requirement.txt        백엔드 실행에 필요한 Python 라이브러리 목록
+```
+
 ## 3. 처리 흐름
 
 ```txt
@@ -52,6 +177,7 @@ backend/
      ├─ text_logo_prompt_builder.py 추출된 키워드를 기반으로 AI 이미지 생성에 적합한 프롬프트 생성
      └─ text_logo_file.py 생성된 이미지 파일을 저장하고, 클라이언트에 반환할 이미지 경로를 관리
 ```
+
 ```
 #FR-08 흐름
 사용자 스케치 이미지 업로드
@@ -80,6 +206,7 @@ Stable Diffusion 기반 로고 재생성
 ```
 
 #FR-08 백엔드 구조 및 파일 정의
+
 ```
 backend/
  ├─ routes/

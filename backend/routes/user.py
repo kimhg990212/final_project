@@ -107,27 +107,3 @@ def withdraw(
         "message": "회원탈퇴 완료"
     }
     
-@router.delete("/withdraw/{user_id}")
-def withdraw(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    user = (
-        db.query(User)
-        .filter(User.id == user_id)
-        .first()
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="사용자를 찾을 수 없습니다."
-        )
-
-    user.is_deleted = True
-
-    db.commit()
-
-    return {
-        "message": "회원탈퇴 완료"
-    }
