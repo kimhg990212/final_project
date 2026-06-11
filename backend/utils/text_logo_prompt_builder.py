@@ -25,8 +25,8 @@ def build_logo_prompt(keywords: dict):
 
     logo_type_text = {
         "emblem": "emblem logo, badge style, circular composition",
-        "text": "typography logo, wordmark style",
-        "symbol_text": "symbol and text logo, icon with brand text",
+        "text": "symbol logo, icon only, no letters, no words",
+        "symbol_text": "symbol logo, icon only, no letters, no words",
         "auto": "professional logo design"
     }.get(logo_type, "professional logo design")
 
@@ -37,7 +37,7 @@ Professional logo design for a {business_type} business.
 Color palette: {color_text}.
 Mood: {mood_text}.
 {complexity_text}.
-Clean vector logo, brand identity, high quality, centered composition, white background.
+Clean vector logo, brand identity, high quality, centered composition, white background, no text, no letters, no words.
 Based on user request: {raw_text}
 """.strip()
 

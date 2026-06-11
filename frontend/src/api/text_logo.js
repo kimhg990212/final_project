@@ -2,13 +2,14 @@ import { fetchWithAuthExpiry } from "./apiClient";
 
 const BASE_URL = "http://localhost:5000";
 
-export async function generateTextLogo({ text, userId }) {
+export async function generateTextLogo({ logoName, text, userId }) {
   const response = await fetch(`${BASE_URL}/text-logo/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      logo_name: logoName,
       text,
       user_id: userId,
     }),

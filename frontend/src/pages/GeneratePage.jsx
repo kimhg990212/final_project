@@ -7,12 +7,17 @@ const BASE_URL = "http://localhost:5000";
 
 function GeneratePage({ userId, googleToken }) {
   const [text, setText] = useState("");
+  const [logoName, setLogoName] = useState("");
   const [result, setResult] = useState(null);
   const [mode, setMode] = useState("text");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleGenerate = async () => {
+    if (!logoName.trim()) {
+      alert("상표명을 입력해주세요.");
+      return;
+    }
     if (!text.trim()) {
       alert("로고 설명을 입력해주세요.");
       return;
@@ -27,12 +32,14 @@ function GeneratePage({ userId, googleToken }) {
       setLoading(true);
 
       const data = await generateTextLogo({
+        logoName,
         text,
         userId,
       });
 
       setResult({
         resultId: data.id ?? null,
+        logoName,
         prompt: text,
         image_url: data.image_url || data.image_path,
       });
@@ -133,6 +140,13 @@ function GeneratePage({ userId, googleToken }) {
 
           {mode === "text" ? (
             <>
+              <label>상표명</label>
+              <input
+                type="text"
+                placeholder="예: 멍멍마켓"
+                value={logoName}
+                onChange={(e) => setLogoName(e.target.value)}
+              />
               <label>로고 설명</label>
 
               <textarea
@@ -209,6 +223,10 @@ function GeneratePage({ userId, googleToken }) {
 
           {result && (
             <div className="result-info">
+              <p>
+                <strong>상표명</strong>
+                {result.logoName}
+              </p>
               <p>
                 <strong>입력 내용</strong>
                 {result.prompt || "입력된 설명 없음"}

@@ -11,6 +11,7 @@ router = APIRouter(
 )
 
 class TextLogoRequest(BaseModel):
+    logo_name: str
     text: str
     user_id: int
 
