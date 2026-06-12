@@ -1,3 +1,5 @@
+# 비즈니스 로직 처리 하는 기능
+# route에서 받은 요청을 처리
 from fastapi import UploadFile, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from services.file_service import save_upload_file
@@ -6,6 +8,7 @@ from models.file_model import UploadedFile
 from models.result_model import GeneratedResult
 from schemas.upload_schema import GenerateRequest
 
+# 파일 저장 + DB에 파일 정보 기록
 async def handle_upload(file: UploadFile, db: Session):
     file_info = await save_upload_file(file)
     
@@ -15,6 +18,7 @@ async def handle_upload(file: UploadFile, db: Session):
     db.refresh(db_file)
     return db_file
 
+# DB에 결과 레코드 생성후 BackgroundTasks로 AI생성 등록
 async def handle_generate(req: GenerateRequest, db: Session, background_tasks: BackgroundTasks):
     db_file = db.query(UploadedFile).filter(
         UploadedFile.id == req.file_id
@@ -37,6 +41,7 @@ async def handle_generate(req: GenerateRequest, db: Session, background_tasks: B
         db.rollback()
         raise HTTPException(status_code=500, detail="처리 중 오류가 발생했습니다.")
 
+# DB에서 결과 조회해서 반환
 def handle_get_result(result_id: int, db: Session):
     result = db.query(GeneratedResult).filter(
         GeneratedResult.id == result_id

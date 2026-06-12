@@ -1,3 +1,5 @@
+# file_model.py - DB테이블 정의
+# UploadedFile → uploaded_files 테이블(파일 업로드할 때 파일명, 저장 경로, 파일 타입이 저장)
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from utils.database import Base

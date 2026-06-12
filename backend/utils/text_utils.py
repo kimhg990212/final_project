@@ -1,3 +1,7 @@
+# 파일에서 텍스트 추출
+# .txt — 파일 직접 읽기
+# .docx — python-docx로 문단 추출
+# .png, .jpg, .jpeg — CLIP 모델로 이미지 유형 분류
 import os
 
 try:
@@ -18,7 +22,7 @@ def extract_text_from_file(file_path: str) -> str:
     
     # 텍스트 파일 처리
     if ext == ".txt":
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8-sig", errors="ignore") as f:
             return f.read()
     
     # 이미지 파일 처리 (CLIP 모델 활용)

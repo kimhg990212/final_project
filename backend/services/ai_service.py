@@ -1,3 +1,4 @@
+# AI 생성 처리
 from utils.text_utils import extract_text_from_file
 from openai import OpenAI
 import os
