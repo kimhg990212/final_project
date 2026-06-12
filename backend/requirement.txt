@@ -1,24 +1,19 @@
 fastapi==0.115.0
-uvicorn
-python-multipart
+uvicorn==0.30.6
+python-multipart==0.0.9
 pydantic==2.9.2
+
 pydantic[email]
-email-validator
-pydantic-settings
 passlib==1.7.4
 bcrypt==4.0.1
-aiofiles
 
-joblib
 pandas
-pandasql
-python-dotenv
-pymysql
-requests
-lxml
-
 numpy==1.26.4
 pillow==10.4.0
+
+pandasql
+lxml
+joblib
 
 torch==2.3.1
 torchvision==0.18.1
@@ -31,6 +26,15 @@ accelerate==0.34.2
 safetensors==0.4.5
 
 sqlalchemy==2.0.35
+
+python-dotenv==1.0.1
+
+pymysql==1.2.0  
+requests==2.34.2 
+scikit-learn==1.7.2
+
 sentence_transformers
 pytesseract
 openai
+aiofiles
+

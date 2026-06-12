@@ -1,0 +1,227 @@
+{
+  "패션·잡화": {
+    "colors": [
+      {
+        "color": "#3f5774",
+        "percentage": 20.6
+      },
+      {
+        "color": "#d7222a",
+        "percentage": 20.5
+      },
+      {
+        "color": "#193162",
+        "percentage": 19.8
+      },
+      {
+        "color": "#f33639",
+        "percentage": 19.8
+      },
+      {
+        "color": "#e66b2c",
+        "percentage": 19.4
+      }
+    ],
+    "analyzed_count": 23
+  },
+  "뷰티·화장품": {
+    "colors": [
+      {
+        "color": "#f33639",
+        "percentage": 30.3
+      },
+      {
+        "color": "#9a896b",
+        "percentage": 18.9
+      },
+      {
+        "color": "#ebdcc9",
+        "percentage": 17.7
+      },
+      {
+        "color": "#9ebd20",
+        "percentage": 17.1
+      },
+      {
+        "color": "#506432",
+        "percentage": 16.0
+      }
+    ],
+    "analyzed_count": 18
+  },
+  "식음료": {
+    "colors": [
+      {
+        "color": "#f6ad2c",
+        "percentage": 28.1
+      },
+      {
+        "color": "#8d7b3d",
+        "percentage": 23.0
+      },
+      {
+        "color": "#f3dcb7",
+        "percentage": 17.3
+      },
+      {
+        "color": "#cca775",
+        "percentage": 16.6
+      },
+      {
+        "color": "#d7222a",
+        "percentage": 15.1
+      }
+    ],
+    "analyzed_count": 64
+  },
+  "IT·전자·통신": {
+    "colors": [
+      {
+        "color": "#2b652e",
+        "percentage": 37.9
+      },
+      {
+        "color": "#d7222a",
+        "percentage": 16.0
+      },
+      {
+        "color": "#4a83d5",
+        "percentage": 15.8
+      },
+      {
+        "color": "#f33639",
+        "percentage": 15.4
+      },
+      {
+        "color": "#f6ad2c",
+        "percentage": 14.9
+      }
+    ],
+    "analyzed_count": 48
+  },
+  "생활용품·가구": {
+    "colors": [
+      {
+        "color": "#f01426",
+        "percentage": 26.6
+      },
+      {
+        "color": "#f6ad2c",
+        "percentage": 23.8
+      },
+      {
+        "color": "#3f5774",
+        "percentage": 17.1
+      },
+      {
+        "color": "#d7222a",
+        "percentage": 16.9
+      },
+      {
+        "color": "#677c9a",
+        "percentage": 15.6
+      }
+    ],
+    "analyzed_count": 46
+  },
+  "엔터·콘텐츠": {
+    "colors": [
+      {
+        "color": "#0ba8a1",
+        "percentage": 23.6
+      },
+      {
+        "color": "#fcd101",
+        "percentage": 20.6
+      },
+      {
+        "color": "#feb3fd",
+        "percentage": 18.7
+      },
+      {
+        "color": "#0f4c81",
+        "percentage": 18.7
+      },
+      {
+        "color": "#3f5774",
+        "percentage": 18.5
+      }
+    ],
+    "analyzed_count": 53
+  },
+  "헬스·의료": {
+    "colors": [
+      {
+        "color": "#d7222a",
+        "percentage": 27.0
+      },
+      {
+        "color": "#2b652e",
+        "percentage": 21.3
+      },
+      {
+        "color": "#3f5774",
+        "percentage": 18.1
+      },
+      {
+        "color": "#cde9fb",
+        "percentage": 16.9
+      },
+      {
+        "color": "#f6ad2c",
+        "percentage": 16.8
+      }
+    ],
+    "analyzed_count": 46
+  },
+  "교육·서비스·금융": {
+    "colors": [
+      {
+        "color": "#f6ad2c",
+        "percentage": 36.0
+      },
+      {
+        "color": "#d7222a",
+        "percentage": 19.2
+      },
+      {
+        "color": "#001338",
+        "percentage": 15.7
+      },
+      {
+        "color": "#114101",
+        "percentage": 14.7
+      },
+      {
+        "color": "#fcd101",
+        "percentage": 14.4
+      }
+    ],
+    "analyzed_count": 46
+  },
+  "산업·기타": {
+    "colors": [
+      {
+        "color": "#c5b29a",
+        "percentage": 21.4
+      },
+      {
+        "color": "#e7423a",
+        "percentage": 21.3
+      },
+      {
+        "color": "#8c192c",
+        "percentage": 19.7
+      },
+      {
+        "color": "#ea9c7d",
+        "percentage": 19.2
+      },
+      {
+        "color": "#3f5774",
+        "percentage": 18.4
+      }
+    ],
+    "analyzed_count": 37
+  }
+}
