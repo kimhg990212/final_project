@@ -60,12 +60,21 @@ award winning logo design,
 sharp edges,
 centered composition,
 white background,
-icon only,
-no text,
-no letters,
-no words,
-no typography,
-no brand name,
+ONE single logo only.
+A single centered icon mark.
+Icon only.
+No text.
+No letters.
+No words.
+No typography.
+No brand name.
+No alphabet.
+No Korean text.
+No captions.
+
+Minimal flat vector logo.
+Clean simple outline.
+Isolated on plain white background.
 single centered symbol,
 
 {prompt}

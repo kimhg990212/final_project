@@ -1,9 +1,13 @@
 import os
 from uuid import uuid4
 from PIL import Image, ImageDraw, ImageFont
-from PIL import Image
+import math
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 UPLOAD_DIR = "uploads/images"
 
+
+# 텍스트 색깔 랜덤으로 관련 깊은 색 정하기
 def extract_text_color(image_path):
     img = Image.open(image_path).convert("RGB")
 
@@ -45,20 +49,33 @@ def compose_logo_with_text(image_path: str, logo_text: str):
     text_color = extract_text_color(image_path)
 
     icon = Image.open(image_path).convert("RGBA")
-    icon = icon.resize((520, 520))
+
+    # 위쪽 아이콘 부분만 자르기
+    icon = icon.crop((0, 0, icon.width, int(icon.height * 0.7)))
+
+    icon = icon.resize((430, 430))
 
     canvas = Image.new("RGBA", (1024, 1024), "WHITE")
-    canvas.paste(icon, (252, 120), icon)
+
+    # 이미지 위치: 기존 120보다 위로
+    canvas.paste(icon, ((1024-430)//2, 130), icon)
 
     draw = ImageDraw.Draw(canvas)
-
-    font = ImageFont.truetype("C:/Windows/Fonts/malgunbd.ttf", 120)
+    
+    font_path = os.path.join(
+        BASE_DIR,
+        "font",
+        "KimjungchulScript-Bold.otf"
+    )
+    font = ImageFont.truetype(font_path, 100)
 
     bbox = draw.textbbox((0, 0), logo_text, font=font)
     text_width = bbox[2] - bbox[0]
 
     x = (1024 - text_width) // 2
-    y = 690
+
+    # 텍스트 위치: 기존 690보다 위로
+    y = 560
 
     draw.text(
         (x, y),
