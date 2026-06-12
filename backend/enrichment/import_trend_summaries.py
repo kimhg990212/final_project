@@ -17,7 +17,7 @@ from utils.database import engine
 def main():
     """Colab 결과 JSON을 trend_summaries 테이블에 적재"""
     
-    input_file = "llm_output_summaries.json"
+    input_file = "llm_output_summaries_with_desc_140.json"
     
     with open(input_file, "r", encoding="utf-8") as f:
         summaries = json.load(f)
