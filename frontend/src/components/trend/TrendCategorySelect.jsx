@@ -8,7 +8,7 @@ function TrendCategorySelect({ classification, onClassificationChange }) {
       <select
         value={classification}
         onChange={(e) => onClassificationChange(e.target.value)}
-        className="h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-700 min-w-[160px] focus:outline-none focus:border-blue-500 transition"
+        className="h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-700 min-w-[160px] focus:outline-none focus:border-purple-500 transition"
       >
         {NICE_CODES.map((option) => (
           <option key={option.code} value={option.code}>

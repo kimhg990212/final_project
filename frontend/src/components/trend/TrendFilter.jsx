@@ -16,8 +16,8 @@ function TrendFilter({ period, onPeriodChange }) {
             className={`h-10 px-4 rounded-md border transition ${
               // 삼항 연산자 사용
               period === option.value
-                ? "bg-blue-500 text-white border-blue-500"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                ? "bg-purple-100 text-purple-800 border-purple-500 font-semibold"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-purple-50"
             }`}
           >
             {option.label}
