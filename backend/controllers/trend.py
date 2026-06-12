@@ -7,3 +7,16 @@ def get_trends(classification: str, period: str, page: int, sort: str):
         page=page,
         sort=sort,
     )
+
+def get_trend_summary(classification: str):  
+    return trend_service.get_trend_summary(
+        classification=classification
+    )    
+
+def get_trend_colors(classification: str):
+    return trend_service.get_trend_colors(classification=classification)
+
+def get_trend_classification_stats(classification: str):
+    return trend_service.get_trend_classification_stats(
+        classification=classification,
+    )

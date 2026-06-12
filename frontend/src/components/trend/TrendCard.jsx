@@ -10,6 +10,7 @@ function TrendCard({ item }) {
             className="w-full h-full object-contain"
           />
         ) : (
+          // 이미지 placeholder
           <span className="text-gray-400 text-sm">이미지 없음</span>
         )}
       </div>

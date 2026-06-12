@@ -11,7 +11,7 @@ function TrendSort({ sort, onSortChange }) {
       <select
         value={sort}
         onChange={(e) => onSortChange(e.target.value)}
-        className="h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-700 min-w-[140px] focus:outline-none focus:border-blue-500 transition"
+        className="h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-700 min-w-[140px] focus:outline-none focus:border-purple-500 transition"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
