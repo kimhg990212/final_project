@@ -1,6 +1,9 @@
 import json
 import os
 from datetime import datetime, timedelta
+
+from dateutil.relativedelta import relativedelta
+
 from models import trend
 from utils.database import engine
 from utils.categories import get_category_by_nice_code, get_nice_codes
@@ -17,11 +20,11 @@ def get_trends(classification, period, page, sort="latest", size=20):
     sort:           정렬 기준 ("latest" | "oldest" | "applicant", 기본 "latest")   
     size:           페이지당 건수 (기본 20)
     """
+    
     # 1. period → start_date 계산 (차트·요약과 동일 기준 / 데이터를 지속 적재하지 않는 상황이다 보니 차트·요약과 동일 기준으로 기준일 2026-06-06으로 고정)
-    days_map = {"6m": 180, "1y": 365, "3y": 365 * 3}
-    days = days_map[period]
-    today = datetime(2026, 6, 6)      # datetime.now() 대신 고정
-    start = today - timedelta(days=days)
+    months_map = {"6m": 6, "1y": 12, "3y": 36}
+    today = datetime(2026, 6, 6) # datetime.now() 대신 고정
+    start = today - relativedelta(months=months_map[period])
     start_date = start.strftime("%Y%m%d")
 
     # 2. page → offset 계산
