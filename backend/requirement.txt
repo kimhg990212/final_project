@@ -37,4 +37,4 @@ sentence_transformers
 pytesseract
 openai
 aiofiles
-
+pydantic-settings

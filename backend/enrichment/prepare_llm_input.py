@@ -1,11 +1,8 @@
-# DB에서 카테고리별 데이터를 LLM 입력 형태로 추출:
-# . 9개 카테고리 데이터를 JSON으로 추출
-# . 각 카테고리당 최대 500개 상표 (LLM 컨텍스트 한도)
-# . Colab에 업로드할 입력 파일임
+# DB에서 카테고리별 데이터를 LLM 입력 형태로 추출
+
 import os
 import sys
 import json
-from datetime import date
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -16,12 +13,11 @@ from sqlalchemy import text
 from utils.database import engine
 from utils.categories import CATEGORIES
 
-# EXAONE 2.4B의 컨택스트 한도 32,768 토큰
+# EXAONE 2.4B의 컨택스트 한도: 32,768 토큰
 def get_category_data(category_name: str, nice_codes: list, 
-                      period_start: str, period_end: str, limit: int = 500): # LLM이 한 번에 처리할 수 있는 최대 토큰 수(엑사온 2.4B 컨텍스트 25% 사용)
+                      period_start: str, period_end: str, limit: int = 500): # LLM이 한 번에 처리할 수 있는 최대 토큰 수(예상)
     """카테고리별 상표 데이터 조회 (LLM 입력용)"""
     
-    # 니스 코드 LIKE 조건 만들기
     like_conditions = " OR ".join([
         f"classification_code LIKE '%{code}%'" 
         for code in nice_codes
@@ -58,47 +54,54 @@ def get_category_data(category_name: str, nice_codes: list,
         for row in rows
     ]
 
+# 니스 코드별로 건수 집계 (차트 방식처럼 코드별 건수를 계산해서, 같은 숫자를 EXAONE한테도 넘김 → 할루시네이션 방지)
+def get_code_counts(nice_codes, period_start, period_end):
+    """니스 코드별 출원 건수 — 차트(get_classification_stats_query)와 동일 기준"""
+    counts = []
+    with engine.connect() as conn:
+        for code in nice_codes:
+            cnt = conn.execute(text("""
+                SELECT COUNT(*) FROM trademark_trends
+                WHERE classification_code LIKE :pattern
+                  AND application_date >= :ps
+                  AND application_date <= :pe
+            """), {"pattern": f"%{code}%", "ps": period_start, "pe": period_end}).scalar()
+            counts.append({"code": code, "count": int(cnt or 0)})
+    counts.sort(key=lambda x: x["count"], reverse=True)
+    return counts
+
+# main()에서 기간을 차트와 동일하게 고정 + code_counts 포함
 def main():
-    """모든 카테고리의 LLM 입력 데이터 생성"""
-    today = date.today()
-    three_years_ago = today.replace(year=today.year - 3)
-    
-    period_start = three_years_ago.strftime("%Y%m%d")  
-    period_end = today.strftime("%Y%m%d")             
-    
+    period_start = "20230606"
+    period_end   = "20260606"
     print(f"기간: {period_start} ~ {period_end}\n")
-    
+
     output = {}
-    
     for category_name, info in CATEGORIES.items():
         print(f"[{category_name}] 데이터 추출 중...")
         
+        # DB에서 데이터 가져옴
         data = get_category_data(
-            category_name=category_name,
-            nice_codes=info["nice_codes"],
-            period_start=period_start,
-            period_end=period_end,
-            limit=500      
+            category_name, info["nice_codes"],
+            period_start, period_end, limit=500, # 카테고리당 최대 500개 (LLM 컨텍스트 한도 고려)
         )
-        
+        code_counts = get_code_counts(info["nice_codes"], period_start, period_end)  
+        # output에 추가
         output[category_name] = {
             "nice_codes": info["nice_codes"],
             "period_start": period_start,
             "period_end": period_end,
             "trademark_count": len(data),
-            "trademarks": data
+            "code_counts": code_counts,   # 차트와 같은 코드별 건수
+            "trademarks": data,
         }
-        
-        print(f"  → {len(data)}개 추출")
-    
-    # JSON 저장
-    output_file = "llm_input_data.json"
-    with open(output_file, "w", encoding="utf-8") as f:
+        print(f"  → 상표 {len(data)}개 추출, 코드 {len(code_counts)}종 집계")
+     
+    with open("llm_input_data.json", "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    
-    print(f"\n=== 완료: {output_file} ===")
+        
+    print("\n=== 완료: llm_input_data.json ===")  
     print(f"카테고리 9개, 카테고리당 최대 500개 상표")
-
 
 if __name__ == "__main__":
     main()

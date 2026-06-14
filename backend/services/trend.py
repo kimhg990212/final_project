@@ -2,8 +2,9 @@ import json
 import os
 from datetime import datetime, timedelta
 from models import trend
-from utils.database import engine 
+from utils.database import engine
 from utils.categories import get_category_by_nice_code, get_nice_codes
+
 
 # "latest": 최신 출원일
 def get_trends(classification, period, page, sort="latest", size=20):
@@ -16,11 +17,11 @@ def get_trends(classification, period, page, sort="latest", size=20):
     sort:           정렬 기준 ("latest" | "oldest" | "applicant", 기본 "latest")   
     size:           페이지당 건수 (기본 20)
     """
-    # 1. period → start_date 계산 (오늘에서 N년 전)
+    # 1. period → start_date 계산 (차트·요약과 동일 기준 / 데이터를 지속 적재하지 않는 상황이다 보니 차트·요약과 동일 기준으로 기준일 2026-06-06으로 고정)
     days_map = {"6m": 180, "1y": 365, "3y": 365 * 3}
     days = days_map[period]
-    today = datetime.now()
-    start = today - timedelta(days=days)  
+    today = datetime(2026, 6, 6)      # datetime.now() 대신 고정
+    start = today - timedelta(days=days)
     start_date = start.strftime("%Y%m%d")
 
     # 2. page → offset 계산
@@ -61,21 +62,24 @@ def get_trend_summary(classification):
         return None
     
     # 4. SQLAlchemy 행을 dict로 변환    
+    # 문자열로 반환되다 보니 배열 변환을 위해 dict로 변환 후 data에 담음
     data = dict(row._mapping)  
     if data.get("keywords") and isinstance(data["keywords"], str):
         try:
             data["keywords"] = json.loads(data["keywords"])
+            #        ↑                            ↑
+            #   딕셔너리의 한 키            그 키의 현재 값(문자열)
         except json.JSONDecodeError:
             data["keywords"] = []
     
-    return data  
+    return data   # 딕셔너리 반환 (FastAPI가 자동으로 JSON 객체로 변환해서 응답)
 
 # 컬러 분석 api
 def get_trend_colors(classification: str):
     if not classification:
-        return None   
+        return None   # 빈 값일 때 처리
     
-    # 1. category_name 매핑 
+    # 1. category_name 매핑 (만들어둔 utils. get_category_by_nice_code 함수 사용)
     category_name = get_category_by_nice_code(classification)
     if not category_name:
         return None      # 매핑 실패 시
@@ -99,13 +103,14 @@ def get_trend_colors(classification: str):
     if not category_data:
         return None
     
-    # 6. 응답 형식(명시적 반환 형식 / 프론트엔드가 다루기 쉬움)
+    # 6. 응답 형식(명시적 반환 형식)
     return {
         "category": category_name,
         "colors": category_data.get("colors", []),
         "analyzed_count": category_data.get("analyzed_count", 0)
     }
 
+# 카테고리 그룹 내 어떤 니스 코드가 많이 출원됐는지 시각화  
 def get_trend_classification_stats(classification):
     """카테고리 그룹 내 분류 코드별 빈도 + 한글 라벨"""
     if not classification:
@@ -126,6 +131,8 @@ def get_trend_classification_stats(classification):
     # 4. 한글 라벨 + 비율 계산
     total = sum(s["count"] for s in stats)
     
+    # "현재는 빠른 개발을 우선시했고, 
+    # 향후 utils/categories.py로 중앙화하여 단일 출처(SSOT)로 관리 예정
     NICE_LABELS = {
     "01": "공업용 화학제품", 
     "02": "페인트, 도료",           

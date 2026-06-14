@@ -24,7 +24,7 @@ function ClassificationStatsCard({ statsData }) {
         <h2 className="text-lg font-semibold">
           📊 업종 코드별 출원 빈도
           <span className="text-sm font-normal text-gray-500 ml-2">
-            ({category} — 최근 3년 기준)
+            (상위 카테고리: {category} — 최근 3년 기준)
           </span>
         </h2>
         <span className="text-sm text-gray-500">

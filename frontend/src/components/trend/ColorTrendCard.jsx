@@ -4,14 +4,17 @@ function ColorTrendCard({ colorData }) {
   if (!colorData || !colorData.colors || colorData.colors.length === 0) {
     return null;
   }
+  const category = colorData.category; // 1단계: 변수 추출
 
   return (
     <div className="mb-6 p-6 bg-purple-50 border border-purple-200 rounded-lg">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
         <h2 className="text-lg font-semibold">
           🎨 색상 트렌드 분석
           <span className="text-sm font-normal text-gray-500 ml-2">
-            (최근 3년 기준)
+            {/* ← 2단계: 변수 사용, 카테고리 있으면 업종 표시, 없으면 최근 3년 기준*/}
+            {/* 일반 문자열은 고정 문자열이라 변수 못 넣으나 백틱 문자열은 변수 같이 사용 가능해 "${변수} 형태로 백틱 안에 삽입 가능*/}
+            (상위 카테고리: {category} — 최근 3년 기준)
           </span>
         </h2>
         <span className="text-sm text-gray-500">
@@ -57,7 +60,8 @@ function ColorTrendCard({ colorData }) {
               <div key={idx}>
                 {/* 라벨 — 한글명만 */}
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-700 font-medium">
+                  {/* 색상명 줄바꿈 방지 */}
+                  <span className="text-gray-700 font-medium whitespace-nowrap">
                     {getColorName(c.color)}
                   </span>
                   <span className="text-gray-700 font-medium">

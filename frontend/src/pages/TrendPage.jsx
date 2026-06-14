@@ -1,11 +1,21 @@
+// import 목록들
 import { useEffect, useState } from "react";
 import { getTrends, getTrendSummary, getTrendColors } from "../api/trend";
+// import ReactMarkdown from "react-markdown";
+
+// ../의 정확한 의미?
+// "현재 파일의 상위 폴더" ❌ (애매)
+// "현재 파일이 들어있는 폴더의 상위 폴더" ✅(파일은 ..에 포함 안 되고 폴더 단위로 지금 파일에서 상단으로 올라가야 맞음)
+// [정확]
+// "내가 있는 폴더(pages)를 벗어나는 게 한 단계"
+// "pages에서 .. = src"
 
 import TrendCategorySelect from "../components/trend/TrendCategorySelect";
 import TrendFilter from "../components/trend/TrendFilter";
 import TrendSort from "../components/trend/TrendSort";
 import TrendGrid from "../components/trend/TrendGrid";
 import ColorTrendCard from "../components/trend/ColorTrendCard";
+// 분류 코드별 출원 빈도 시각화용 데이터 조회(카테고리 그룹 내 니스 코드별 출원 빈도 조회 시각화)
 import ClassificationStatsCard from "../components/trend/ClassificationStatsCard";
 import { getTrendClassificationStats } from "../api/trend";
 
@@ -14,28 +24,62 @@ function TrendPage() {
   const [classification, setClassification] = useState("");
   const [period, setPeriod] = useState("1y");
   const [sort, setSort] = useState("latest");
-  const [items, setItems] = useState([]);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [items, setItems] = useState([]); // 누적 데이터
+  const [page, setPage] = useState(1); // 현재 페이지
+  const [total, setTotal] = useState(0); // 전체 건수
   const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summary, setSummary] = useState(null); //요약 데이터 저장(초기값은 null), API 응답 받으면 객체로 저장, 카드 렌더링에 사용
+  const [summaryLoading, setSummaryLoading] = useState(false); //로딩 중인지 여부 저장(초기값은 false로 대기 중 아님을 의미), API 호출 시작은 True, API 응답 후엔 false로 전환됨, 로딩 화면 표시에 사용
+  // ㄴ 상태 보관소(화면에 출력되는 것은 없음)
+  // 마크다운 + 한글 호환 처리 (일부만 반영되고 전체 반영 안 되는 것 동일해 효과 없어서 주석 처리)
+  // const fixKoreanMarkdown = (text) => {
+  //   if (!text) return "";
+  //   // **text** 뒤에 한글이 바로 오면 zero-width space 삽입
+  //   // (\u200B는 보이지 않는 글자, 마크다운이 경계로 인식) **text**" 닫는 ** 뒤에 한글 문자가 바로 오면 → 마크다운이 닫는 ** 로 인식 안 하므로
+  //   return text.replace(/\*\*([^*]+?)\*\*(?=[가-힣])/g, "**$1**\u200B");
+  // };
 
-  // 니스 코드 굵은 글씨 처리 위해 마크다운 ** → HTML <strong> 변환
+  // 니스 코드 굵은 글씨 처리 위해 마크다운 ** → HTML <strong> 변환 (한글 호환 안전) / 일관성 없이 형식 출력돼 다 필요
   // LLM이 카테고리마다 3가지 다른 형식 사용
+  // const formatBold = (text) => {
+  //   if (!text) return "";
+  //   // 1. ** ** → <strong> , let은 const와 달리 재할당 가능 변수
+  //   let result = text.replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>");
+
+  //   // 2. '##번(...)' → <strong>##번(...)</strong>
+  //   // LLM이 9개 카테고리 분석할 때 매번 다른 형식 출력. 일관성 없어 추가적으로 formatBold에 단일따옴표 패턴 추가
+  //   result = result.replace(/'(\d{2}번\([^)]+\))'/g, "<strong>$1</strong>");
+
+  //   // 3. ##번 + (선택)괄호 → <strong>  (07번(기계)·01번 둘 다 처리, 중복 방지)
+  //   // (?<!<strong>) — 이미 <strong>으로 감싸진 건 제외 (중복 방지)
+  //   result = result.replace(
+  //     /(?<!<strong>)(\d{2}번(?:\([^)]*\))?)(?!<\/strong>)/g,
+  //     "<strong>$1</strong>",
+  //   );
+
+  //   return result;
+  // };
+
+  // "번호만 굵게, 건수는 굵게 안 함"으로 일관되게 하기 위해, formatBold 맨 앞에서 LLM의 **를 먼저 다 지우고 내 규칙만 적용
   const formatBold = (text) => {
     if (!text) return "";
-    let result = text.replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>");
-    result = result.replace(/'(\d{2}번\([^)]+\))'/g, "<strong>$1</strong>");
+    let result = text.replace(/\*\*/g, ""); // LLM이 찍은 ** 전부 제거
+
+    // 번호(##번 + 선택 괄호) 굵게
     result = result.replace(
-      /(?<!<strong>)(\d{2}번\([^)]+\))(?!<\/strong>)/g,
+      /(?<!<strong>)(\d{2}번(?:\([^)]*\))?)(?!<\/strong>)/g,
       "<strong>$1</strong>",
     );
 
+    // 건수(예: 193건, 4,627건)도 굵게
+    result = result.replace(/([\d,]+건)/g, "<strong>$1</strong>");
+
     return result;
   };
+
   const [colorData, setColorData] = useState(null);
   const [colorLoading, setColorLoading] = useState(false);
+  // 분류 코드별 출원 빈도 시각화용 데이터 조회(카테고리 그룹 내 니스 코드별 출원 빈도 조회 시각화)
   const [statsData, setStatsData] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -58,6 +102,7 @@ function TrendPage() {
 
   // LLM 요약
   useEffect(() => {
+    // 전체 선택이면 요약 안 가져옴(업종 미선택이면 호출 안 함
     if (!classification) {
       setSummary(null);
       return;
@@ -67,7 +112,7 @@ function TrendPage() {
     getTrendSummary({ classification })
       .then((response) => {
         if (response) {
-          // keywords 파싱 — 문자열이든 배열이든 OK
+          // 방어적 keywords 파싱 — 문자열이든 배열이든 OK
           let keywords = response.keywords;
           if (typeof keywords === "string") {
             try {
@@ -81,8 +126,21 @@ function TrendPage() {
           }
 
           setSummary({
+            // 말줄임표 세 개는 spread (스프레드)로 객체의 모든 속성을 펼쳐서 복사, response의 모든 속성 펼치기
             ...response,
+            // 펼친 response의 모든 속성 중에서 keywords 다시 정의 (같은 키 다시 정의 → 덮어쓰기!) /keywords는 배열로 바꿔 덮어쓰기 해야 하므로
             keywords,
+            // [spread 없이 직접 쓰면]
+            // setSummary({
+            //   category_name: response.category_name,
+            //   summary_text: response.summary_text,
+            //   period_start: response.period_start,
+            //   period_end: response.period_end,
+            //   model_name: response.model_name,
+            //   generated_at: response.generated_at,
+            //   keywords: keywords,
+            // });
+            //   =>  길고 반복적
           });
         } else {
           setSummary(null);
@@ -93,9 +151,9 @@ function TrendPage() {
         setSummary(null);
       })
       .finally(() => setSummaryLoading(false));
-  }, [classification]); // 카테고리 단위별 요약
+  }, [classification]); // period는 의존성 X (카테고리 단위 요약)
 
-  // K-means 색상 분석 시각화
+  // K-means 색상 분석 시각화 위한 코드
   useEffect(() => {
     if (!classification) {
       setColorData(null);
@@ -171,8 +229,12 @@ function TrendPage() {
       <div className="flex justify-start mb-6">
         <a
           href="#trademark-grid"
+          //블루 테두리 및 그림자 효과
+          // className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border-2 border-blue-700 text-blue-700 font-semibold rounded-lg hover:bg-blue-100 transition shadow-md hover:shadow-lg"
+          // 팀 메인 페이지 색에 맞춰 보라로 변경
           className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 border-2 border-purple-700 text-purple-700 font-semibold rounded-lg hover:bg-purple-100 transition shadow-md hover:shadow-lg"
         >
+          {/* 버튼 느낌 주기 위해 추가 */}
           <span className="text-xs bg-purple-700 text-white px-2 py-0.5 rounded">
             CLICK
           </span>
@@ -182,11 +244,14 @@ function TrendPage() {
       </div>
 
       {/* 화면에 출력할 LLM 요약 카드 */}
+      {/* summaryLoading - 상태 보관소 정보를 가져와 화면에 로딩 중 표시 */}
       {summaryLoading ? (
         <div className="mb-6 p-6 bg-gray-50 rounded-lg text-center text-gray-500">
           AI 분석 데이터 로딩 중...
         </div>
       ) : summary ? (
+        // <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        // 팀 메인 페이지와 맞추기 위해 블루에서 보라로 변경
         <div className="mb-6 p-6 bg-purple-50 border border-purple-200 rounded-lg">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">📊 AI 트렌드 요약</h2>
@@ -210,6 +275,8 @@ function TrendPage() {
                 {summary.keywords.map((kw, idx) => (
                   <span
                     key={idx}
+                    // className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full"
+                    // 팀 메인 페이지 색과 맞추기 위해 블루에서 보라로 변경
                     className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
                   >
                     {kw}
@@ -218,6 +285,8 @@ function TrendPage() {
               </div>
             </div>
           )}
+          {/* <div className="mt-4 text-xs text-gray-500 border-t border-blue-200 pt-3 space-y-1"> */}
+          {/* 팀 메인 페이지 색과 맞추기 위해 블루에서 보라로 변경 */}
           <div className="mt-4 text-xs text-gray-500 border-t border-purple-200 pt-3 space-y-1">
             <div>
               분석 기간: {summary.period_start} ~ {summary.period_end} · 분석일:{" "}
@@ -230,9 +299,23 @@ function TrendPage() {
           </div>
         </div>
       ) : (
+        /* ⭐ 빈 상태 안내 — 전체 선택 시 */
+        // <div className="mb-6 p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
+        //   <p className="text-gray-600 mb-2">
+        //     📊 업종을 선택하시면 AI 트렌드 요약을 확인하실 수 있습니다.
+        //   </p>
+        //   <p className="text-sm text-gray-500">
+        //     카테고리별로 EXAONE 모델이 분석한 상표 출원 트렌드를 제공합니다.
+        //   </p>
+        // </div>
+
+        // 업종 전체 선택 시 엑사온 요약과 시각화는 숨기기
+        // <div className="mb-6 p-8 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg">
+        // 팀 메인 페이지 색에 맞추고자 블루에서 보라로 변경
         <div className="mb-6 p-8 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg">
           <div className="text-center">
             {/* 안내 화살표 */}
+            {/* 안내 화살표 — mb-8 추가로 아이콘과 간격 넓힘 */}
             <div className="mb-8 text-gray-400 animate-bounce">
               ↑ 페이지 상단에서 업종 선택
             </div>
@@ -251,8 +334,18 @@ function TrendPage() {
               수 있습니다.
             </p>
 
-            {/* 미리 보기 */}
+            {/* 미리 보기 — 무엇을 볼 수 있는지 */}
             <div className="flex flex-wrap justify-center gap-3 text-sm">
+              {/* <span className="px-4 py-2 bg-white border border-blue-200 rounded-full text-blue-700">
+                📝 AI 트렌드 요약
+              </span>
+              <span className="px-4 py-2 bg-white border border-purple-200 rounded-full text-purple-700">
+                🎨 색상 트렌드 분석
+              </span>
+              <span className="px-4 py-2 bg-white border border-indigo-200 rounded-full text-indigo-700">
+                📊 분류 코드별 빈도
+              </span>  */}
+              {/* 팀 메인페이지 색이랑 동일하게 가고자 미리보기 칩 블루에서 보라로 변경 */}
               <span className="px-4 py-2 bg-white border border-purple-200 rounded-full text-purple-700">
                 📝 AI 트렌드 요약
               </span>
@@ -278,7 +371,7 @@ function TrendPage() {
       )}
 
       {/* 카드 그리드 */}
-      {/* 빠른 이동 위해 ID 생성 - 버튼 타겟) */}
+      {/* ⭐ 카드 그리드 — id 추가 (빠른 이동 버튼 타겟) */}
       <div id="trademark-grid">
         {loading && page === 1 ? (
           <p className="text-center py-10">로딩 중...</p>
