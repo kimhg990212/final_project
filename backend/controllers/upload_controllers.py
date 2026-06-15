@@ -29,7 +29,7 @@ async def handle_generate(req: GenerateRequest, db: Session, background_tasks: B
     db_result = GeneratedResult(
         file_id=req.file_id,
         prompt=req.prompt,
-        result_text="처리 중..."
+        result_image="처리 중..."
     )
     try:
         db.add(db_result)

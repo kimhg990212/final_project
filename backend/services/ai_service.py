@@ -1,12 +1,8 @@
-# AI 생성 처리
-from utils.text_utils import extract_text_from_file
-from openai import OpenAI
 import os
+import base64
+import requests
 
-client = OpenAI(
-    api_key=os.getenv("GROQ_API_KEY"),
-    base_url="https://api.groq.com/openai/v1"
-)
+COLAB_SD_URL = os.getenv("COLAB_SD_URL")
 
 def generate_from_file_task(file_path: str, prompt: str, result_id: int):
 
@@ -16,35 +12,38 @@ def generate_from_file_task(file_path: str, prompt: str, result_id: int):
     db = SessionLocal()
 
     try:
-        extracted_text = extract_text_from_file(file_path)
+        with open(file_path, "rb") as f:
+            image_b64 = base64.b64encode(f.read()).decode("utf-8")
 
-        if not extracted_text:
-            raise ValueError("파일에서 텍스트를 추출할 수 없습니다.")
-
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "주어진 문서를 바탕으로 사용자의 요청에 응답해주세요."},
-                {"role": "user", "content": f"[문서 내용]\n{extracted_text}\n\n[요청]\n{prompt}"}
-            ],
-            max_tokens=1000,
-            temperature=0.7,
+        response = requests.post(
+            f"{COLAB_SD_URL}/generate_file",
+            data={
+                "prompt": prompt,
+                "image_b64": image_b64,
+                "num_images": 1,
+            },
+            timeout=180
         )
-        result_text = response.choices[0].message.content
+        response.raise_for_status()
+        result_data = response.json()
+
+        if "error" in result_data:
+            raise ValueError(result_data["error"])
+
+        result_image_b64 = result_data["images_b64"][0]
 
         db.query(GeneratedResult).filter(
             GeneratedResult.id == result_id
-        ).update({"result_text": result_text})
+        ).update({"result_image": result_image_b64})
         db.commit()
 
-        return result_text
+        return result_image_b64
 
     except Exception as e:
         db.rollback()
-
         db.query(GeneratedResult).filter(
             GeneratedResult.id == result_id
-        ).update({"result_text": f"오류 발생: {str(e)}"})
+        ).update({"result_image": f"오류 발생: {str(e)}"})
         db.commit()
         raise e
 
