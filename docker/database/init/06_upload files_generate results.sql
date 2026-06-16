@@ -23,14 +23,15 @@
 DROP TABLE IF EXISTS `generated_results`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `generated_results` (
+
+CREATE TABLE  IF NOT EXISTS  `generated_results` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `file_id` int(11) NOT NULL,
   `prompt` text DEFAULT NULL,
-  `result_text` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
+  `result_image` longtext DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
