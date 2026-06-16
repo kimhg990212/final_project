@@ -24,7 +24,7 @@ def get_trends_query(conn, classification, start_date, sort, size, offset):
                    application_date, classification_code, vienna_code,
                    application_status, image_url, big_image_url, 
                    synced_at
-            FROM trademark_trends
+            FROM kipris_trademarks
             WHERE (:classification = '' OR classification_code LIKE CONCAT('%', :classification, '%'))
               AND application_date >= :start_date
             ORDER BY {order_by}
@@ -45,7 +45,7 @@ def count_trends_query(conn, classification, start_date):
     return conn.execute(
         text("""
             SELECT COUNT(*) AS cnt
-            FROM trademark_trends
+            FROM kipris_trademarks
             WHERE (:classification = '' OR classification_code LIKE CONCAT('%', :classification, '%'))
               AND application_date >= :start_date
         """),
@@ -82,7 +82,7 @@ def get_classification_stats_query(conn, nice_codes):
         count = conn.execute(
             text("""
                 SELECT COUNT(*) AS cnt
-                FROM trademark_trends
+                FROM kipris_trademarks
                 WHERE classification_code LIKE :pattern
                   AND application_date >= '20230606'
                   AND application_date <= '20260606'

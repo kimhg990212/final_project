@@ -1,4 +1,4 @@
-#trademark_trends 테이블에서 전체 컬럼 export하는 경우(팀 데이터 공유용)
+#kipris_trademarks 테이블에서 전체 컬럼 export하는 경우(팀 데이터 공유용)
 
 import os
 import sys
@@ -19,14 +19,14 @@ import json
 from sqlalchemy import text
 from utils.database import engine
 
-print("전체 trademark_trends 데이터 내보내기...")
+print("전체 kipris_trademarks 데이터 내보내기...")
 
 with engine.connect() as conn:
     rows = conn.execute(text("""
         SELECT application_number, title, applicant_name, application_date,
                classification_code, vienna_code, application_status,
                image_url, big_image_url, ocr_text, caption
-        FROM trademark_trends
+        FROM kipris_trademarks
     """)).fetchall()
 
 data = [
@@ -46,13 +46,13 @@ data = [
     for row in rows
 ]
 
-with open("trademark_trends_export.json", "w", encoding="utf-8") as f:
+with open("kipris_trademarks_export.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 
 # 마지막에 통계 추가
 ocr_count = sum(1 for d in data if d["ocr_text"])
 caption_count = sum(1 for d in data if d["caption"])
 
-print(f"\n{len(data)}개 행 → trademark_trends_export.json")
+print(f"\n{len(data)}개 행 → kipris_trademarks_export.json")
 print(f"  OCR 채워진 행: {ocr_count}개")
 print(f"  Caption 채워진 행: {caption_count}개")

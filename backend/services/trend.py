@@ -37,7 +37,7 @@ def get_trends(classification, period, page, sort="latest", size=20):
 
     # 4. SQLAlchemy 행을 dict 리스트로 변환 (JSON으로 보낼 수 있게)
     data = [dict(row._mapping) for row in rows]
-
+    print(data)
     # 5. 응답 형태로 묶어서 controllers에게 반환
     return {
         "data":  data,    # 트렌드 상표들(20개)

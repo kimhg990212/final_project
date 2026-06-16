@@ -34,7 +34,7 @@ def get_category_image_urls(category_name, nice_codes, period_start, period_end,
     # ocr 필터 조건 : ocr_text IS NULL OR LENGTH(ocr_text) < 10) 
     sql = text(f"""
         SELECT big_image_url
-        FROM trademark_trends
+        FROM kipris_trademarks
         WHERE ({like_conditions})
           AND application_date >= :period_start
           AND application_date <= :period_end

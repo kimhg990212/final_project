@@ -59,7 +59,7 @@ async def build_unified_image_index():
     with SessionLocal() as session:
         res = session.execute(text(
             "SELECT id, application_number, image_url, big_image_url "
-            "FROM trademark_trends ORDER BY id"
+            "FROM kipris_trademarks ORDER BY id"
         ))
         metadata_records = res.mappings().all()
 
