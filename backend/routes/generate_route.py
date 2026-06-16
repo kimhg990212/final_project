@@ -21,16 +21,12 @@ async def generate_logo(
     trademark_ids: str = Form(...),
     brand_description: str = Form(...),
     style: str = Form(default=""),
-    mood: str = Form(default=""),
-    color: str = Form(default=""),
 ):
     id_list = [int(id.strip()) for id in trademark_ids.split(",")]
     return await generate_logo_controller(
         trademark_ids=id_list,
         brand_description=brand_description,
         style=style,
-        mood=mood,
-        color=color,
     )
 
 @router.post(

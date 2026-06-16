@@ -13,7 +13,8 @@ def get_categories_controller():
 
 async def search_logo_controller(
     category_name: str,
-    brand_description: str
+    brand_description: str,
+    style: str = ""
 ):
     try:
         print("1. 카테고리:", category_name)
@@ -30,6 +31,7 @@ async def search_logo_controller(
         results = search_dissimilar_by_category(
             query_vector=text_embedding,
             nice_codes=nice_codes,
+            style=style,
             top_k=3
         )
         print("5. 검색 완료 결과수:", len(results))

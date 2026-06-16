@@ -18,9 +18,11 @@ def get_categories():
 @router.post("/logo")
 async def search_logo(
     category_name: str = Form(...),
-    brand_description: str = Form(...)
+    brand_description: str = Form(...),
+    style: str = Form(default="")
 ):
     return await search_logo_controller(
         category_name=category_name,
-        brand_description=brand_description
+        brand_description=brand_description,
+        style=style
     )

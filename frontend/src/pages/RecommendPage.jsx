@@ -2,16 +2,9 @@ import { useEffect, useState } from "react";
 import { getCategories, searchLogo, generateLogo } from "../api/recommend";
 
 const BASE_URL = "http://localhost:5000";
-const STEPS = ["업종 선택", "브랜드 설명", "TOP3 조회", "로고 생성"];
+const STEPS = ["커스터마이징", "병합이미지 추천", "로고 생성"];
 
-const STYLE_OPTIONS = ["아이콘만", "텍스트만", "아이콘+텍스트"];
-const MOOD_OPTIONS = [
-  "모던/미니멀",
-  "클래식/전통",
-  "귀여움/친근함",
-  "고급스러움/럭셔리",
-];
-const COLOR_OPTIONS = ["밝은 계열", "어두운 계열", "단색", "컬러풀"];
+const STYLE_OPTIONS = ["이미지", "이미지+텍스트"];
 
 function OptionButton({ label, selected, onClick }) {
   return (
@@ -38,11 +31,10 @@ function RecommendPage({ userId }) {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [brandDescription, setBrandDescription] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
-  const [selectedMood, setSelectedMood] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
   const [top3, setTop3] = useState([]);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     getCategories()
@@ -58,11 +50,12 @@ function RecommendPage({ userId }) {
       const results = await searchLogo({
         categoryName: selectedCategory,
         brandDescription,
+        style: selectedStyle,
       });
       setTop3(results);
-      setStep(2);
+      setStep(1);
     } catch (e) {
-      alert("TOP3 조회 실패: " + e.message);
+      alert("병합이미지 추천 실패: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -71,20 +64,20 @@ function RecommendPage({ userId }) {
   const handleGenerate = async () => {
     try {
       setLoading(true);
+      setIsGenerating(true);
       const ids = top3.map((r) => r.trademark_id);
       const images = await generateLogo({
         trademarkIds: ids,
         brandDescription,
         style: selectedStyle,
-        mood: selectedMood,
-        color: selectedColor,
       });
       setGeneratedImages(images);
-      setStep(3);
+      setStep(2);
     } catch (e) {
       alert("로고 생성 실패: " + e.message);
     } finally {
       setLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -109,12 +102,57 @@ function RecommendPage({ userId }) {
     setBrandDescription("");
     setSelectedCategory("");
     setSelectedStyle("");
-    setSelectedMood("");
-    setSelectedColor("");
+    setIsGenerating(false);
   };
 
   return (
     <main style={{ maxWidth: 800, margin: "0 auto", padding: "2rem" }}>
+      {isGenerating && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              padding: "3rem 4rem",
+              textAlign: "center",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                border: "5px solid #eee",
+                borderTop: "5px solid #333",
+                borderRadius: "50%",
+                margin: "0 auto 1.5rem",
+                animation: "spin 0.9s linear infinite",
+              }}
+            />
+            <h2 style={{ margin: 0, marginBottom: 8, fontSize: 22 }}>
+              로고 생성 중...
+            </h2>
+            <p style={{ color: "#888", margin: 0, fontSize: 14 }}>
+              1~3분 정도 소요될 수 있습니다
+            </p>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       <h1>로고 추천</h1>
 
       <div
@@ -141,7 +179,7 @@ function RecommendPage({ userId }) {
         ))}
       </div>
 
-      {step <= 1 && (
+      {step === 0 && (
         <section>
           <div style={{ marginBottom: "1.5rem" }}>
             <label
@@ -151,10 +189,7 @@ function RecommendPage({ userId }) {
             </label>
             <select
               value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setStep(1);
-              }}
+              onChange={(e) => setSelectedCategory(e.target.value)}
               style={{ width: "100%", padding: "0.5rem", fontSize: 16 }}
             >
               <option value="">-- 업종을 선택하세요 --</option>
@@ -190,50 +225,10 @@ function RecommendPage({ userId }) {
             <label
               style={{ display: "block", marginBottom: 8, fontWeight: "bold" }}
             >
-              분위기
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {MOOD_OPTIONS.map((opt) => (
-                <OptionButton
-                  key={opt}
-                  label={opt}
-                  selected={selectedMood === opt}
-                  onClick={() =>
-                    setSelectedMood(selectedMood === opt ? "" : opt)
-                  }
-                />
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label
-              style={{ display: "block", marginBottom: 8, fontWeight: "bold" }}
-            >
-              색상 계열
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {COLOR_OPTIONS.map((opt) => (
-                <OptionButton
-                  key={opt}
-                  label={opt}
-                  selected={selectedColor === opt}
-                  onClick={() =>
-                    setSelectedColor(selectedColor === opt ? "" : opt)
-                  }
-                />
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label
-              style={{ display: "block", marginBottom: 8, fontWeight: "bold" }}
-            >
               브랜드 설명
             </label>
             <textarea
-              placeholder="예: 고급스러운 분위기의 카페, 브라운과 골드 컬러, 미니멀한 스타일"
+              placeholder="예: 애견카페, 애견용품점"
               value={brandDescription}
               onChange={(e) => setBrandDescription(e.target.value)}
               rows={4}
@@ -251,17 +246,17 @@ function RecommendPage({ userId }) {
               border: "none",
               borderRadius: 8,
               fontSize: 16,
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
             }}
           >
-            {loading ? "조회 중..." : "TOP3 조회하기"}
+            {loading ? "조회 중..." : "병합이미지 추천 받기"}
           </button>
         </section>
       )}
 
-      {step === 2 && (
+      {step === 1 && (
         <section>
-          <h2>비유사 TOP3 상표</h2>
+          <h2>참고 TOP3 상표</h2>
           <div
             style={{
               display: "flex",
@@ -288,10 +283,14 @@ function RecommendPage({ userId }) {
                     style={{ width: "100%", height: 120, objectFit: "contain" }}
                   />
                 )}
-                <p style={{ fontSize: 14, marginTop: 8 }}>{item.title}</p>
-                <p style={{ fontSize: 12, color: "#999" }}>
-                  유사도: {item.similarity_score}
-                </p>
+                {selectedStyle === "이미지+텍스트" && (
+                  <>
+                    <p style={{ fontSize: 14, marginTop: 8 }}>{item.title}</p>
+                    <p style={{ fontSize: 12, color: "#999" }}>
+                      유사도: {item.similarity_score}
+                    </p>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -320,16 +319,16 @@ function RecommendPage({ userId }) {
                 border: "none",
                 borderRadius: 8,
                 fontSize: 16,
-                cursor: "pointer",
+                cursor: loading ? "not-allowed" : "pointer",
               }}
             >
-              {loading ? "생성 중... (1~3분 소요)" : "로고 생성하기"}
+              로고 생성하기
             </button>
           </div>
         </section>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <section>
           <h2>생성된 로고</h2>
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>

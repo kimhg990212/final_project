@@ -7,10 +7,11 @@ export async function getCategories() {
   return data.data.categories;
 }
 
-export async function searchLogo({ categoryName, brandDescription }) {
+export async function searchLogo({ categoryName, brandDescription, style }) {
   const form = new FormData();
   form.append("category_name", categoryName);
   form.append("brand_description", brandDescription);
+  if (style) form.append("style", style);
 
   const res = await fetch(`${BASE_URL}/search/logo`, {
     method: "POST",
@@ -25,15 +26,11 @@ export async function generateLogo({
   trademarkIds,
   brandDescription,
   style,
-  mood,
-  color,
 }) {
   const form = new FormData();
   form.append("trademark_ids", trademarkIds.join(","));
   form.append("brand_description", brandDescription);
   if (style) form.append("style", style);
-  if (mood) form.append("mood", mood);
-  if (color) form.append("color", color);
 
   const res = await fetch(`${BASE_URL}/generate/logo`, {
     method: "POST",
