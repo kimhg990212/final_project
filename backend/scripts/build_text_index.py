@@ -36,8 +36,8 @@ async def build_faiss_text_index():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     with SessionLocal() as session:
-        # Directly query the `trademark_trends` table (sync/ETL cached table)
-        res = session.execute(text("SELECT id, application_number, title, applicant_name, caption, ocr_text FROM trademark_trends ORDER BY id"))
+        # Directly query the `kipris_trademarks` table (sync/ETL cached table)
+        res = session.execute(text("SELECT id, application_number, title, applicant_name, caption, ocr_text FROM kipris_trademarks ORDER BY id"))
         metadata_records = res.mappings().all()
 
     total_count = len(metadata_records)

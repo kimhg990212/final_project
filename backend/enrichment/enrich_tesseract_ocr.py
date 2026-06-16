@@ -114,7 +114,7 @@ with engine.begin() as conn:
         ocr_value = ocr_text if ocr_text else None    
     
         conn.execute(text("""
-            UPDATE trademark_trends 
+            UPDATE kipris_trademarks 
             SET ocr_text = :ocr_text 
             WHERE id = :id
         """), {"ocr_text": ocr_value, "id": row.id}) 

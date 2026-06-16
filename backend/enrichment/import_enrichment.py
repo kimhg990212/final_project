@@ -1,4 +1,4 @@
-# trademark_trends 테이블에서 전체 컬럼 import 하는 경우(전체 데이터 공유 버전)
+# kipris_trademarks 테이블에서 전체 컬럼 import 하는 경우(전체 데이터 공유 버전)
 
 import os
 import sys
@@ -19,9 +19,9 @@ import json
 from sqlalchemy import text
 from utils.database import engine
 
-print("trademark_trends_export.json 불러오기...")
+print("kipris_trademarks_export.json 불러오기...")
 
-with open("trademark_trends_export.json", "r", encoding="utf-8") as f:
+with open("kipris_trademarks_export.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
 print(f"{len(data)}개 행 처리 중...")
@@ -29,7 +29,7 @@ print(f"{len(data)}개 행 처리 중...")
 with engine.begin() as conn:
     for i, item in enumerate(data, 1):
         conn.execute(text("""
-            INSERT INTO trademark_trends (
+            INSERT INTO kipris_trademarks (
                 application_number, title, applicant_name, application_date,
                 classification_code, vienna_code, application_status,
                 image_url, big_image_url, ocr_text, caption

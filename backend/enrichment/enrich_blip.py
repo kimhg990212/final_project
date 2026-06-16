@@ -71,7 +71,7 @@ with engine.begin() as conn:
     rows = conn.execute(
         text(f"""
             SELECT id, big_image_url 
-            FROM trademark_trends 
+            FROM kipris_trademarks 
             WHERE caption IS NULL AND big_image_url IS NOT NULL AND big_image_url != ''
             LIMIT {BATCH_SIZE}
         """)
@@ -95,7 +95,7 @@ with engine.begin() as conn:
             caption_value = caption
             
             conn.execute(text("""     
-                UPDATE trademark_trends 
+                UPDATE kipris_trademarks 
                 SET caption = :caption 
                 WHERE id = :id
             """), {"caption": caption_value, "id": row.id}) 

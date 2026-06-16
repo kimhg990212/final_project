@@ -27,7 +27,7 @@ def get_category_data(category_name: str, nice_codes: list,
         SELECT 
             title, applicant_name, classification_code,
             application_date, ocr_text, caption
-        FROM trademark_trends
+        FROM kipris_trademarks
         WHERE ({like_conditions})
           AND application_date >= :period_start
           AND application_date <= :period_end
@@ -61,7 +61,7 @@ def get_code_counts(nice_codes, period_start, period_end):
     with engine.connect() as conn:
         for code in nice_codes:
             cnt = conn.execute(text("""
-                SELECT COUNT(*) FROM trademark_trends
+                SELECT COUNT(*) FROM kipris_trademarks
                 WHERE classification_code LIKE :pattern
                   AND application_date >= :ps
                   AND application_date <= :pe
