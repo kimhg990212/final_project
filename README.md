@@ -76,9 +76,7 @@ npm run dev
 
 ### backend 설치
 
-[faiss_text](https://drive.google.com/file/d/131Bd7yZPfyC2pI3nX439SXyU-IbRe4cN/view?usp=sharing)
-
-[faiss_image](https://drive.google.com/file/d/1EI63FpxH6hh0u_Ynxb4OSrUvlQPBe9gJ/view?usp=sharing)
+[faiss_text](https://drive.google.com/file/d/1_yzGsCKeNrbKfnHX6xs7h9yBlPAnzmgk/view)
 
 [faiss_image](https://drive.google.com/file/d/1hvOu4ocq4jbFPd0RssYLT6-7Dp2aJVpv/view?usp=sharing)
 
