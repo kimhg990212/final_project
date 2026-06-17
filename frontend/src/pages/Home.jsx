@@ -1,6 +1,23 @@
+import { useState, useEffect } from "react";
 import "../css/Home.css";
+import p01b from "../assets/logo_preview/01_before.png";
+import p01a from "../assets/logo_preview/01_after.png";
+import p02b from "../assets/logo_preview/02_before.png";
+import p02a from "../assets/logo_preview/02_after.png";
+
+const pairs = [
+  { before: p01b, after: p01a },
+  { before: p02b, after: p02a },
+];
 
 function Home() {
+  const [idx, setIdx] = useState(0); // 현재 보여줄 이미지 번호
+
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % pairs.length), 3000);
+    return () => clearInterval(t);
+  }, []); // 3초마다 다음 이미지(끝나면 0으로)
+
   return (
     <div className="home-page">
       <section className="hero">
@@ -27,11 +44,27 @@ function Home() {
         </div>
 
         <div className="hero-card">
-          <div className="preview-box">Logo Preview</div>
+          <div className="preview-pair">
+            <figure>
+              <img key={`b${idx}`} src={pairs[idx].before} alt="생성 전 로고" />
+              <figcaption>Before</figcaption>
+            </figure>
+            <span className="preview-arrow">→</span>
+            <figure>
+              <img key={`a${idx}`} src={pairs[idx].after} alt="생성 후 로고" />
+              <figcaption>After</figcaption>
+            </figure>
+          </div>
           <div className="preview-list">
-            <div></div>
-            <div></div>
-            <div></div>
+            {pairs.map((p, i) => (
+              <div
+                key={i}
+                className={i === idx ? "active" : ""}
+                onClick={() => setIdx(i)}
+              >
+                <img src={p.after} alt={`샘플 ${i + 1}`} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -57,7 +90,6 @@ function Home() {
           <p>저장한 이미지와 이용 기록을 확인합니다.</p>
         </a>
       </section>
-
     </div>
   );
 }

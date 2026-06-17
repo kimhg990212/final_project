@@ -75,7 +75,7 @@
   box-shadow: 0 24px 60px rgba(91, 75, 219, 0.25);
 }
 
-.preview-box {
+/* .preview-box {
   height: 280px;
   border-radius: 24px;
   background: white;
@@ -85,20 +85,20 @@
   color: #5b4bdb;
   font-size: 28px;
   font-weight: 800;
-}
+} */
 
 .preview-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 14px;
   margin-top: 16px;
 }
 
-.preview-list div {
+/* .preview-list div {
   height: 72px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.55);
-}
+} */
 
 .service-grid {
   padding: 20px 72px 56px;
@@ -229,4 +229,69 @@
   .guide-box {
     margin: 0 24px 40px;
   }
+}
+
+.preview-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+}
+.preview-pair figure {
+  margin: 0;
+  text-align: center;
+}
+.preview-pair img {
+  width: 160px; /*로고 크기*/
+  height: 160px;
+  object-fit: contain;
+  animation: fadein 0.5s ease;
+}
+.preview-pair figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+}
+.preview-arrow {
+  font-size: 18px;
+  color: #c4c4d4;
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.preview-list div {
+  height: 90px;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 6px; /* 로고가 박스에 딱 붙지 않게*/
+  box-sizing: border-box;
+}
+
+.preview-list div img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /*contain : 로고 안 잘리게*/
+  transform: scale(1.1);
+}
+
+.preview-list div.active {
+  outline: 2px solid #7c5cff;
+}
+
+/* 당근(1번 썸네일)만 여백이 많아서 더 크게 */
+.preview-list div:nth-child(1) img {
+  transform: scale(1.3); /* 1.3~1.5 사이로 조절하며 토끼와 비슷하게 */
 }
